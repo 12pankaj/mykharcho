@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
@@ -7,6 +7,8 @@ import CustomBottomSheet from '../components/CustomBottomSheet';
 import { LogOut, User, Shield, ChevronRight, Repeat, MessageSquare, Crown, Camera, Globe, Check } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { UserService } from '../api/apiService';
+import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DUMMY_AVATARS = [
     { id: 'm1', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&h=250&q=80' },
@@ -23,6 +25,7 @@ export default function ProfileScreen({ navigation }: any) {
     const { signOut } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [isEditVisible, setIsEditVisible] = useState(false);
+    const insets = useSafeAreaInsets();
     
     const [formData, setFormData] = useState({
         fullName: '',
@@ -93,18 +96,53 @@ export default function ProfileScreen({ navigation }: any) {
     const getProfilePic = () => {
         if (!profile?.profile_pic) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=2563eb&color=fff&size=256&font-size=0.4&bold=true`;
         if (profile.profile_pic.startsWith('http')) return profile.profile_pic;
-        return `https://d7nql637-5010.inc1.devtunnels.ms${profile.profile_pic}`;
+        return `http://72.60.222.102:5010${profile.profile_pic}`;
+    };
+
+    const handleFileUpload = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (!result.canceled) {
+                const asset = result.assets[0];
+                const uri = asset.uri;
+                const fileType = asset.mimeType ? asset.mimeType.split('/')[1] : uri.substring(uri.lastIndexOf('.') + 1);
+                const formData = new FormData();
+                formData.append('image', {
+                    uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+                    name: `profile.${fileType || 'jpg'}`,
+                    type: asset.mimeType || `image/${fileType || 'jpg'}`
+                } as any);
+
+                const res = await UserService.uploadProfilePic(formData);
+                setProfile({ ...profile, profile_pic: res.data.imageUrl });
+                Alert.alert('Success', 'Profile picture uploaded!');
+            }
+        } catch (err) {
+            console.error(err);
+            Alert.alert('Error', 'Failed to upload image');
+        }
     };
 
     return (
         <View style={styles.container}>
             <Header title="Settings" subtitle="System Preferences" />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 60) }]}>
                 
                 {/* Advanced Profile Card */}
                 <GlassCard style={styles.profileCard} intensity="heavy">
-                    <View style={styles.avatarContainer}>
-                        <Image source={{ uri: getProfilePic() }} style={styles.avatarImage} />
+                    <View style={{ position: 'relative' }}>
+                        <View style={styles.avatarContainer}>
+                            <Image source={{ uri: getProfilePic() }} style={styles.avatarImage} />
+                        </View>
+                        <TouchableOpacity style={styles.cameraBtn} onPress={handleFileUpload}>
+                            <Camera color="#fff" size={14} />
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.profileInfo}>
                         <Text style={styles.name}>{profile?.full_name || 'Loading...'}</Text>
@@ -307,7 +345,6 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 120,
     },
     profileCard: {
         flexDirection: 'row',
@@ -330,6 +367,19 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
         borderRadius: 36,
+    },
+    cameraBtn: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: Colors.primary,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.background,
     },
     avatarScroll: {
         marginBottom: 32,

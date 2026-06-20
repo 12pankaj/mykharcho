@@ -146,7 +146,7 @@ export default function SupportTicketsScreen() {
                             <Text style={{ color: Colors.textSecondary, textAlign: 'center', marginTop: 40 }}>No messages yet.</Text>
                         ) : (
                             messages.map((msg: any) => {
-                                const isUser = msg.sender === 'User';
+                                const isUser = msg.sender_type === 'user';
                                 return (
                                     <View key={msg.id} style={[styles.messageWrapper, isUser ? styles.messageUser : styles.messageAgent]}>
                                         <View style={[styles.messageBubble, isUser ? styles.bubbleUser : styles.bubbleAgent]}>

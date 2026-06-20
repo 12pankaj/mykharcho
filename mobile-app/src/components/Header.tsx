@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Bell, Search } from 'lucide-react-native';
 import { Colors } from '../theme/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps {
     title: string;
@@ -10,8 +11,10 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle, onNotificationPress }: HeaderProps) {
+    const insets = useSafeAreaInsets();
+    
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingTop: Math.max(insets.top + 20, 60) }]}>
             <View>
                 {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
                 <Text style={styles.title}>{title}</Text>
@@ -35,7 +38,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingTop: 60,
         paddingBottom: 20,
         backgroundColor: Colors.background,
     },

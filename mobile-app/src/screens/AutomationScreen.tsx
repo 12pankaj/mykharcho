@@ -113,7 +113,16 @@ export default function AutomationScreen() {
     const handleToggleStatus = async (rule: any) => {
         const newStatus = rule.status === 'Active' ? 'Paused' : 'Active';
         try {
-            await AutomationService.update(rule.id, { ...rule, status: newStatus });
+            await AutomationService.update(rule.id, {
+                walletId: rule.wallet_id,
+                name: rule.name,
+                amount: rule.amount,
+                type: rule.type,
+                category: rule.category,
+                frequency: rule.frequency,
+                nextRunDate: rule.next_run_date,
+                status: newStatus 
+            });
             // Optimistic update
             setRules(rules.map((r: any) => r.id === rule.id ? { ...r, status: newStatus } : r) as any);
         } catch (err) {

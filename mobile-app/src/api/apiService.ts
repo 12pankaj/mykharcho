@@ -78,7 +78,19 @@ export const LoanService = {
 export const UserService = {
     getProfile: () => api.get('/profile'),
     updateProfile: (data: any) => api.put('/profile', data),
-    uploadProfilePic: (data: FormData) => api.post('/profile/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    uploadProfilePic: async (data: FormData) => {
+        const response = await fetch(`${API_BASE_URL}/profile/upload`, {
+            method: 'POST',
+            body: data,
+            headers: {
+                'Authorization': `Bearer ${currentToken?.trim()}`,
+                'x-ms-devtunnel-skip': 'true',
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
+        if (!response.ok) throw new Error('Upload failed');
+        return { data: await response.json() };
+    },
     savePushToken: (pushToken: string) => api.post('/profile/push-token', { pushToken }),
 };
 

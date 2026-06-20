@@ -1,16 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Dimensions } from 'react-native';
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import { useState, useEffect } from 'react';
 import GlassCard from '../components/GlassCard';
 import CustomBottomSheet from '../components/CustomBottomSheet';
 import { ArrowDownRight, ArrowUpRight, TrendingUp, Wallet, Clock, X, Camera, Mic, Zap, CreditCard } from 'lucide-react-native';
+import { PieChart } from 'react-native-chart-kit';
 import { AIService, DashboardService, TransactionService, WalletService, UserService } from '../api/apiService';
 import { registerForPushNotificationsAsync } from '../services/NotificationService';
 import { TextInput, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
     const { user } = useAuth();
@@ -19,7 +22,20 @@ export default function DashboardScreen() {
     const [stats, setStats] = useState({ balance: 0, income: 0, expense: 0, incomeTrend: '+0%', expenseTrend: '+0%' });
     const [transactions, setTransactions] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [topCategories, setTopCategories] = useState<any[]>([]);
+    const [pieData, setPieData] = useState<any[]>([]);
     const [wallets, setWallets] = useState([]);
+    const insets = useSafeAreaInsets();
+
+    const screenWidth = Dimensions.get('window').width - 48; // padding 24 on each side
+
+    const chartConfig = {
+        backgroundGradientFrom: '#0f172a',
+        backgroundGradientTo: '#0f172a',
+        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+        strokeWidth: 2,
+        useShadowColorFromDataset: false,
+    };
 
     const fetchDashboard = async () => {
         // Fetch Profile
@@ -48,7 +64,32 @@ export default function DashboardScreen() {
         // Fetch Transactions
         try {
             const txRes = await TransactionService.getAll();
-            setTransactions(txRes.data.slice(0, 5)); // Just recent 5
+            const allTx = txRes.data;
+            setTransactions(allTx.slice(0, 5)); // Just recent 5
+            
+            // Calculate Top Categories for Dashboard Reports Block
+            const catMap: any = {};
+            allTx.forEach((tx: any) => {
+                if (tx.type === 'Expense') {
+                    catMap[tx.category] = (catMap[tx.category] || 0) + parseFloat(tx.amount);
+                }
+            });
+            const mapped = Object.keys(catMap).map(cat => ({
+                name: cat,
+                amount: catMap[cat]
+            })).sort((a, b) => b.amount - a.amount).slice(0, 4); // Top 4
+            
+            const colors = ['#3b82f6', '#f43f5e', '#ea580c', '#10b981'];
+            const mappedPie = mapped.map((item, idx) => ({
+                name: item.name,
+                population: item.amount,
+                color: colors[idx % colors.length],
+                legendFontColor: '#94a3b8',
+                legendFontSize: 11
+            }));
+            
+            setPieData(mappedPie);
+
         } catch (err) {
             console.error('Failed to load transactions', err);
         }
@@ -84,6 +125,7 @@ export default function DashboardScreen() {
             <Header 
                 title="Overview" 
                 subtitle={`Welcome Back, ${profile?.full_name || user?.fullName || 'User'}`} 
+                onNotificationPress={() => navigation.navigate('Notifications' as never)}
             />
             {profile && profile.role !== 'admin' && (
                 <View style={{ paddingHorizontal: 24, marginBottom: 10 }}>
@@ -93,42 +135,56 @@ export default function DashboardScreen() {
                 </View>
             )}
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 40) }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
                 {/* Stat Cards Container */}
                 <View style={styles.statsContainer}>
                     {/* Available Balance Card */}
-                    <GlassCard intensity="heavy" style={styles.statCard}>
+                    <LinearGradient 
+                        colors={['#2563eb', '#1d4ed8']} 
+                        start={{ x: 0, y: 0 }} 
+                        end={{ x: 1, y: 1 }} 
+                        style={styles.gradientCard}
+                    >
                         <View style={styles.statCardHeader}>
-                            <View style={styles.statIconWrapper}>
-                                <Wallet color="#3b82f6" size={20} />
+                            <View style={[styles.statIconWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                <Wallet color="#ffffff" size={20} />
                             </View>
-                            <View style={[styles.trendBadge, stats.incomeTrend.startsWith('+') ? styles.trendPositive : styles.trendNegative]}>
-                                <Text style={[styles.trendText, stats.incomeTrend.startsWith('+') ? styles.trendTextPositive : styles.trendTextNegative]}>
+                            <View style={[styles.trendBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                <Text style={[styles.trendText, { color: '#ffffff' }]}>
                                     {stats.incomeTrend}
                                 </Text>
                             </View>
                         </View>
-                        <Text style={styles.statCardLabel}>Available Balance</Text>
-                        <Text style={styles.statCardValue}>{formatCurrency(stats.balance)}</Text>
-                    </GlassCard>
+                        <Text style={[styles.statCardLabel, { color: 'rgba(255,255,255,0.8)' }]}>Available Balance</Text>
+                        <Text style={[styles.statCardValue, { color: '#ffffff' }]} numberOfLines={1} adjustsFontSizeToFit>
+                            {formatCurrency(stats.balance)}
+                        </Text>
+                    </LinearGradient>
 
                     {/* Monthly Expense Card */}
-                    <GlassCard intensity="heavy" style={styles.statCard}>
+                    <LinearGradient 
+                        colors={['#e11d48', '#be123c']} 
+                        start={{ x: 0, y: 0 }} 
+                        end={{ x: 1, y: 1 }} 
+                        style={styles.gradientCard}
+                    >
                         <View style={styles.statCardHeader}>
-                            <View style={styles.statIconWrapper}>
-                                <CreditCard color="#f43f5e" size={20} />
+                            <View style={[styles.statIconWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                <CreditCard color="#ffffff" size={20} />
                             </View>
-                            <View style={[styles.trendBadge, stats.expenseTrend.startsWith('+') ? styles.trendNegative : styles.trendPositive]}>
-                                <Text style={[styles.trendText, stats.expenseTrend.startsWith('+') ? styles.trendTextNegative : styles.trendTextPositive]}>
+                            <View style={[styles.trendBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                <Text style={[styles.trendText, { color: '#ffffff' }]}>
                                     {stats.expenseTrend}
                                 </Text>
                             </View>
                         </View>
-                        <Text style={styles.statCardLabel}>Monthly Expense</Text>
-                        <Text style={styles.statCardValue}>{formatCurrency(stats.expense)}</Text>
-                    </GlassCard>
+                        <Text style={[styles.statCardLabel, { color: 'rgba(255,255,255,0.8)' }]}>Monthly Expense</Text>
+                        <Text style={[styles.statCardValue, { color: '#ffffff' }]} numberOfLines={1} adjustsFontSizeToFit>
+                            {formatCurrency(stats.expense)}
+                        </Text>
+                    </LinearGradient>
                 </View>
 
                 {/* Quick Actions */}
@@ -154,10 +210,40 @@ export default function DashboardScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* Dashboard Reports Block */}
+                <View style={[styles.sectionHeader, { marginTop: 10 }]}>
+                    <Text style={styles.sectionTitle}>Expense Distribution</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Reports')}>
+                        <Text style={styles.seeAllText}>View Report</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <GlassCard intensity="heavy" style={styles.reportsCard}>
+                    {pieData.length === 0 ? (
+                        <View style={{ padding: 20, alignItems: 'center' }}>
+                            <Text style={{ color: Colors.textSecondary }}>No expenses recorded</Text>
+                        </View>
+                    ) : (
+                        <View style={{ marginLeft: -10, marginTop: -10 }}>
+                            <PieChart
+                                data={pieData}
+                                width={screenWidth}
+                                height={180}
+                                chartConfig={chartConfig}
+                                accessor={"population"}
+                                backgroundColor={"transparent"}
+                                paddingLeft={"5"}
+                                center={[10, 0]}
+                                absolute
+                            />
+                        </View>
+                    )}
+                </GlassCard>
+
                 {/* Recent Transactions */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Recent Activity</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
                         <Text style={styles.seeAllText}>See All</Text>
                     </TouchableOpacity>
                 </View>
@@ -201,19 +287,26 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
     },
     statsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 16,
+        gap: 12,
         marginTop: 10,
-        marginBottom: 24,
+        marginBottom: 20,
     },
-    statCard: {
+    gradientCard: {
         flex: 1,
-        padding: 20,
-        borderRadius: 24,
+        padding: 16,
+        borderRadius: 28,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        elevation: 8,
     },
     statCardHeader: {
         flexDirection: 'row',
@@ -256,14 +349,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '800',
         textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        marginBottom: 8,
+        letterSpacing: 1,
+        marginBottom: 4,
     },
     statCardValue: {
         color: Colors.textPrimary,
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '900',
-        letterSpacing: -1,
+        letterSpacing: -0.5,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -285,7 +378,12 @@ const styles = StyleSheet.create({
     actionsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 16,
+        marginBottom: 24,
+    },
+    reportsCard: {
+        padding: 20,
+        borderRadius: 24,
+        marginBottom: 24,
     },
     actionButton: {
         alignItems: 'center',

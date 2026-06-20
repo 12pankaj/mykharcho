@@ -4,6 +4,7 @@ import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import CustomBottomSheet from '../components/CustomBottomSheet';
 import { ArrowDownRight, ArrowUpRight, Search, Filter, Edit2, Trash2, X, Download } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlassCard from '../components/GlassCard';
 import { TransactionService, WalletService } from '../api/apiService';
 import * as Print from 'expo-print';
@@ -14,6 +15,7 @@ export default function TransactionsScreen({ navigation }: { navigation: any }) 
     const [wallets, setWallets] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
+    const insets = useSafeAreaInsets();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -150,11 +152,13 @@ export default function TransactionsScreen({ navigation }: { navigation: any }) 
             </View>
 
             <ScrollView 
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 40) }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
                 {filteredTransactions.map((tx: any, index: number) => {
                     const isIncome = tx.type === 'Income';
+                    const walletObj = wallets.find((w: any) => w.id === tx.wallet_id);
+                    const walletName = walletObj ? walletObj.name : 'Wallet';
                     return (
                         <GlassCard intensity="heavy" style={styles.txCard} key={tx.id}>
                             <View style={styles.txLeft}>
@@ -166,7 +170,7 @@ export default function TransactionsScreen({ navigation }: { navigation: any }) 
                                     <View style={styles.txDetailsRow}>
                                         <Text style={styles.txDate}>{new Date(tx.transaction_date || tx.created_at).toLocaleDateString()}</Text>
                                         <View style={styles.dot} />
-                                        <Text style={styles.txWallet}>{tx.wallet_name || 'Wallet'}</Text>
+                                        <Text style={styles.txWallet}>{walletName}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 100,
+        paddingTop: 10,
     },
     txCard: {
         flexDirection: 'row',

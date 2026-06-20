@@ -15,8 +15,8 @@ export default function AdminChatScreen({ navigation }: any) {
 
     useEffect(() => {
         // Since we are using an emulator/device, we should point to the DevTunnel URL or backend IP
-        // DevTunnel: https://d7nql637-5010.inc1.devtunnels.ms
-        const newSocket = io('https://d7nql637-5010.inc1.devtunnels.ms');
+        // DevTunnel replaced with local IP for dev
+        const newSocket = io('http://72.60.222.102:5010');
         setSocket(newSocket);
 
         newSocket.on('connect', () => {

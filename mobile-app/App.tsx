@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -14,10 +15,12 @@ import AdminUsersScreen from './src/screens/admin/AdminUsersScreen';
 import AdminPlansScreen from './src/screens/admin/AdminPlansScreen';
 import AdminPaymentsScreen from './src/screens/admin/AdminPaymentsScreen';
 import AutomationScreen from './src/screens/AutomationScreen';
+import ReportsScreen from './src/screens/ReportsScreen';
 import GroupsScreen from './src/screens/GroupsScreen';
 import GroupDetailsScreen from './src/screens/GroupDetailsScreen';
 import SupportTicketsScreen from './src/screens/SupportTicketsScreen';
 import PlansScreen from './src/screens/PlansScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import LoanPaymentScreen from './src/screens/LoanPaymentScreen';
 import AddWalletScreen from './src/screens/AddWalletScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
@@ -58,6 +61,8 @@ function Navigation() {
                         <Stack.Screen name="Groups" component={GroupsScreen} />
                         <Stack.Screen name="GroupDetails" component={GroupDetailsScreen} />
                         <Stack.Screen name="Automation" component={AutomationScreen} />
+                        <Stack.Screen name="Reports" component={ReportsScreen} />
+                        <Stack.Screen name="Notifications" component={NotificationsScreen} />
                         <Stack.Screen name="SupportTickets" component={SupportTicketsScreen} />
                         <Stack.Screen name="Plans" component={PlansScreen} />
                         <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
@@ -82,9 +87,11 @@ function Navigation() {
 
 export default function App() {
     return (
-        <AuthProvider>
-            <StatusBar style="light" />
-            <Navigation />
-        </AuthProvider>
+        <SafeAreaProvider>
+            <AuthProvider>
+                <StatusBar style="light" />
+                <Navigation />
+            </AuthProvider>
+        </SafeAreaProvider>
     );
 }
