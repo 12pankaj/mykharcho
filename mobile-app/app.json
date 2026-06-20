@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "MyKharcho",
+    "slug": "MyKharcho",
+    "scheme": "mykharcho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.jpeg",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo.jpeg",
+      "resizeMode": "contain",
+      "backgroundColor": "#08172c"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.mykharcho.app",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.jpeg",
+        "backgroundColor": "#08172c"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/logo.jpeg"
+    },
+    "plugins": [
+      "expo-web-browser",
+      "@react-native-firebase/app",
+      "@react-native-google-signin/google-signin"
+    ]
+  }
+}

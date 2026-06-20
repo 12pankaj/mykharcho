@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "581569419902",
+    "project_id": "mykharcho",
+    "storage_bucket": "mykharcho.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581569419902:android:8d5479e2de62e38da5562f",
+        "android_client_info": {
+          "package_name": "com.mykharcho.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrTvsPpQlS23Vh-dCh7UO95np7-XUiwgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,530 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image } from 'react-native';
+import { Colors } from '../theme/colors';
+import Header from '../components/Header';
+import GlassCard from '../components/GlassCard';
+import CustomBottomSheet from '../components/CustomBottomSheet';
+import { LogOut, User, Shield, ChevronRight, Repeat, MessageSquare, Crown, Camera, Globe, Check } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { UserService } from '../api/apiService';
+
+const DUMMY_AVATARS = [
+    { id: 'm1', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'f1', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'm2', url: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'f2', url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'm3', url: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'f3', url: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'm4', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&h=250&q=80' },
+    { id: 'f4', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&h=250&q=80' },
+];
+
+export default function ProfileScreen({ navigation }: any) {
+    const { signOut } = useAuth();
+    const [profile, setProfile] = useState<any>(null);
+    const [isEditVisible, setIsEditVisible] = useState(false);
+    
+    const [formData, setFormData] = useState({
+        fullName: '',
+        currency: 'INR',
+        countryCode: 'IN',
+        upiId: ''
+    });
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await UserService.getProfile();
+                setProfile(res.data);
+                setFormData({
+                    fullName: res.data.full_name || '',
+                    currency: res.data.preferred_currency || 'INR',
+                    countryCode: res.data.country_code || 'IN',
+                    upiId: res.data.upi_id || ''
+                });
+            } catch (err) {
+                console.error('Failed to load profile');
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleSaveProfile = async () => {
+        if (!formData.fullName.trim()) return;
+        setIsSaving(true);
+        try {
+            const payload = { 
+                fullName: formData.fullName, 
+                currency: formData.currency, 
+                countryCode: formData.countryCode, 
+                upi_id: formData.upiId,
+                profilePic: profile?.profile_pic
+            };
+            const res = await UserService.updateProfile(payload);
+            setProfile(res.data);
+            setIsEditVisible(false);
+            Alert.alert('Success', 'Profile synchronized successfully!');
+        } catch (err) {
+            console.error('Failed to update profile', err);
+            Alert.alert('Error', 'Failed to update profile');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const selectDummyAvatar = async (url: string) => {
+        try {
+            const payload = { 
+                fullName: formData.fullName, 
+                currency: formData.currency, 
+                countryCode: formData.countryCode, 
+                upi_id: formData.upiId,
+                profilePic: url 
+            };
+            const res = await UserService.updateProfile(payload);
+            setProfile(res.data);
+            Alert.alert('Success', 'Avatar updated!');
+        } catch (err) {
+            Alert.alert('Error', 'Failed to select avatar');
+        }
+    };
+
+    const getProfilePic = () => {
+        if (!profile?.profile_pic) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=2563eb&color=fff&size=256&font-size=0.4&bold=true`;
+        if (profile.profile_pic.startsWith('http')) return profile.profile_pic;
+        return `https://d7nql637-5010.inc1.devtunnels.ms${profile.profile_pic}`;
+    };
+
+    return (
+        <View style={styles.container}>
+            <Header title="Settings" subtitle="System Preferences" />
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                
+                {/* Advanced Profile Card */}
+                <GlassCard style={styles.profileCard} intensity="heavy">
+                    <View style={styles.avatarContainer}>
+                        <Image source={{ uri: getProfilePic() }} style={styles.avatarImage} />
+                    </View>
+                    <View style={styles.profileInfo}>
+                        <Text style={styles.name}>{profile?.full_name || 'Loading...'}</Text>
+                        <Text style={styles.email}>{profile?.email}</Text>
+                        
+                        <View style={styles.badgesRow}>
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{profile?.role || 'user'}</Text>
+                            </View>
+                            {profile?.is_premium && (
+                                <View style={[styles.badge, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
+                                    <Text style={[styles.badgeText, { color: '#3b82f6' }]}>Premium</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </GlassCard>
+
+                {/* Instant Avatars Section */}
+                <Text style={styles.sectionTitle}>Instant Avatars</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarScroll}>
+                    {DUMMY_AVATARS.map((avatar) => (
+                        <TouchableOpacity 
+                            key={avatar.id} 
+                            style={[
+                                styles.dummyAvatarBtn, 
+                                profile?.profile_pic === avatar.url && styles.dummyAvatarSelected
+                            ]}
+                            onPress={() => selectDummyAvatar(avatar.url)}
+                        >
+                            <Image source={{ uri: avatar.url }} style={styles.dummyAvatarImg} />
+                            {profile?.profile_pic === avatar.url && (
+                                <View style={styles.checkOverlay}>
+                                    <Check color="#fff" size={16} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+
+                {/* Upgrade Button */}
+                {!profile?.is_premium && (
+                    <TouchableOpacity 
+                        style={styles.upgradeBanner}
+                        onPress={() => navigation.navigate('Plans')}
+                    >
+                        <Crown color="#000" size={24} />
+                        <View style={styles.upgradeBannerText}>
+                            <Text style={styles.upgradeTitle}>Upgrade to Premium</Text>
+                            <Text style={styles.upgradeSubtitle}>Unlock all exclusive features</Text>
+                        </View>
+                        <ChevronRight color="#000" size={24} />
+                    </TouchableOpacity>
+                )}
+
+                {/* Settings Menu */}
+                <Text style={styles.sectionTitle}>Preferences</Text>
+                <View style={styles.menuContainer}>
+                    <TouchableOpacity 
+                        style={styles.menuItem}
+                        onPress={() => setIsEditVisible(true)}
+                    >
+                        <View style={styles.menuLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 255, 255, 0.05)' }]}>
+                                <User color={Colors.textPrimary} size={20} />
+                            </View>
+                            <Text style={styles.menuText}>Edit Profile</Text>
+                        </View>
+                        <ChevronRight color={Colors.textSecondary} size={20} />
+                    </TouchableOpacity>
+
+                    {/* Automation Rules */}
+                    <TouchableOpacity 
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('Automation')}
+                    >
+                        <View style={styles.menuLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(234, 179, 8, 0.1)' }]}>
+                                <Repeat color={Colors.accent} size={20} />
+                            </View>
+                            <Text style={styles.menuText}>Automation Rules</Text>
+                        </View>
+                        <ChevronRight color={Colors.textSecondary} size={20} />
+                    </TouchableOpacity>
+
+                    {/* Support Tickets */}
+                    <TouchableOpacity 
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('SupportTickets')}
+                    >
+                        <View style={styles.menuLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+                                <MessageSquare color="#3b82f6" size={20} />
+                            </View>
+                            <Text style={styles.menuText}>Support Desk</Text>
+                        </View>
+                        <ChevronRight color={Colors.textSecondary} size={20} />
+                    </TouchableOpacity>
+
+                    {/* Admin Access Portal */}
+                    {profile?.role === 'admin' && (
+                        <TouchableOpacity 
+                            style={styles.menuItem}
+                            onPress={() => navigation.navigate('AdminDashboard')}
+                        >
+                            <View style={styles.menuLeft}>
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                                    <Shield color="#ef4444" size={20} />
+                                </View>
+                                <Text style={[styles.menuText, { color: '#ef4444' }]}>Admin Command Center</Text>
+                            </View>
+                            <ChevronRight color={Colors.textSecondary} size={20} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Logout */}
+                <TouchableOpacity style={styles.logoutBtn} onPress={signOut}>
+                    <LogOut color="#ef4444" size={20} />
+                    <Text style={styles.logoutText}>Log Out securely</Text>
+                </TouchableOpacity>
+
+            </ScrollView>
+
+            {/* Edit Profile Bottom Sheet */}
+            <CustomBottomSheet 
+                visible={isEditVisible} 
+                onClose={() => setIsEditVisible(false)}
+                height={550}
+            >
+                <Text style={styles.sheetTitle}>Edit Profile</Text>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Full Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.fullName}
+                            onChangeText={(text) => setFormData({...formData, fullName: text})}
+                            placeholder="Enter your name"
+                            placeholderTextColor={Colors.textSecondary}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Primary Currency</Text>
+                        <View style={styles.currencyRow}>
+                            {['INR', 'USD', 'EUR', 'AED'].map(curr => (
+                                <TouchableOpacity 
+                                    key={curr} 
+                                    style={[styles.currencyBtn, formData.currency === curr && styles.currencyBtnActive]}
+                                    onPress={() => setFormData({...formData, currency: curr})}
+                                >
+                                    <Text style={[styles.currencyBtnText, formData.currency === curr && { color: '#000' }]}>{curr}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Country Code</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.countryCode}
+                            onChangeText={(text) => setFormData({...formData, countryCode: text})}
+                            placeholder="e.g. IN, US"
+                            placeholderTextColor={Colors.textSecondary}
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>UPI ID</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.upiId}
+                            onChangeText={(text) => setFormData({...formData, upiId: text})}
+                            placeholder="e.g. name@okhdfcbank"
+                            placeholderTextColor={Colors.textSecondary}
+                            autoCapitalize="none"
+                        />
+                    </View>
+                    
+                    <TouchableOpacity 
+                        style={styles.saveBtn} 
+                        onPress={handleSaveProfile}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? (
+                            <ActivityIndicator color={Colors.background} />
+                        ) : (
+                            <Text style={styles.saveBtnText}>Synchronize Profile</Text>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
+            </CustomBottomSheet>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Colors.background,
+    },
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 120,
+    },
+    profileCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 24,
+        gap: 20,
+        marginBottom: 32,
+    },
+    avatarContainer: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: Colors.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.2)'
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 36,
+    },
+    avatarScroll: {
+        marginBottom: 32,
+        paddingHorizontal: 4,
+    },
+    dummyAvatarBtn: {
+        width: 60,
+        height: 60,
+        borderRadius: 16,
+        marginRight: 12,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    dummyAvatarSelected: {
+        borderColor: Colors.primary,
+    },
+    dummyAvatarImg: {
+        width: '100%',
+        height: '100%',
+    },
+    checkOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(59, 130, 246, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    profileInfo: {
+        flex: 1,
+    },
+    name: {
+        color: Colors.textPrimary,
+        fontSize: 20,
+        fontWeight: '900',
+        marginBottom: 4,
+    },
+    email: {
+        color: Colors.textSecondary,
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 12,
+    },
+    badgesRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    badge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 8,
+    },
+    badgeText: {
+        color: Colors.textSecondary,
+        fontSize: 10,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    upgradeBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.primary,
+        padding: 20,
+        borderRadius: 24,
+        marginBottom: 32,
+    },
+    upgradeBannerText: {
+        flex: 1,
+        marginLeft: 16,
+    },
+    upgradeTitle: {
+        color: '#000',
+        fontSize: 16,
+        fontWeight: '900',
+    },
+    upgradeSubtitle: {
+        color: 'rgba(0,0,0,0.7)',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    sectionTitle: {
+        color: Colors.textPrimary,
+        fontSize: 16,
+        fontWeight: '800',
+        marginBottom: 16,
+        marginLeft: 4,
+    },
+    menuContainer: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+        marginBottom: 32,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+    },
+    menuLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    iconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    menuText: {
+        color: Colors.textPrimary,
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    logoutBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        padding: 20,
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.2)',
+    },
+    logoutText: {
+        color: '#ef4444',
+        fontSize: 16,
+        fontWeight: '800',
+    },
+    sheetTitle: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: Colors.textPrimary,
+        marginBottom: 24,
+    },
+    inputGroup: {
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        borderColor: Colors.border,
+        borderRadius: 16,
+        padding: 16,
+        color: Colors.textPrimary,
+        fontSize: 16,
+    },
+    currencyRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    currencyBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    currencyBtnActive: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+    },
+    currencyBtnText: {
+        color: Colors.textSecondary,
+        fontWeight: '800',
+        fontSize: 12,
+    },
+    saveBtn: {
+        backgroundColor: Colors.primary,
+        padding: 16,
+        borderRadius: 16,
+        alignItems: 'center',
+        marginTop: 10,
+        marginBottom: 40,
+    },
+    saveBtnText: {
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: '800',
+    }
+});
