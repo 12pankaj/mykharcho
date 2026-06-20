@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Base URL configured for DevTunnels so the APK can be shared and tested externally
-const API_BASE_URL = 'http://72.60.222.102:5010/api';
+// Base URL pointing to the production backend
+const API_BASE_URL = 'https://api.mykharcho.in/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
