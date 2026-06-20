@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
             } else {
                 localStorage.removeItem('rememberedEmail');
             }
-            
+
             if (response.data && response.data.token) {
                 onAuthSuccess(response.data.token, rememberMe);
             } else {
@@ -70,13 +70,13 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
             <div className="relative w-full max-w-[440px]">
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-10">
-                    <img 
-                        src="/logo.jpeg" 
-                        alt="MyKharcho Logo" 
+                    <img
+                        src="/newlogo.png"
+                        alt="MyKharcho Logo"
                         className="w-20 h-20 rounded-2xl object-cover shadow-2xl shadow-orange-500/40 mb-6 rotate-3 hover:rotate-0 transition-transform duration-300 border-2 border-orange-500/20"
                     />
                     <h1 className="text-4xl font-black tracking-tight text-white mb-2">
-                        SPARK<span className="text-blue-500">EXPENSE</span>
+                        My<span className="text-blue-500">Kharcho</span>
                     </h1>
                     <p className="text-slate-400 font-medium">The Next-Gen Financial Empire</p>
                 </div>
@@ -122,17 +122,17 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
 
                         <div className="flex items-center justify-between px-1">
                             <label className="flex items-center space-x-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     checked={rememberMe}
                                     onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-500 focus:ring-blue-500/40" 
+                                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-500 focus:ring-blue-500/40"
                                 />
                                 <span className="text-xs text-slate-400 font-medium">Remember me</span>
                             </label>
-                            <button 
-                                type="button" 
-                                onClick={() => navigate('/forgot-password')} 
+                            <button
+                                type="button"
+                                onClick={() => navigate('/forgot-password')}
                                 className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
                             >
                                 Forgot Password?
@@ -155,11 +155,11 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
                             <span className="relative px-4 bg-[#0f172a] text-xs font-bold text-slate-500 tracking-widest uppercase">Elite Access</span>
                         </div>
 
-                        <button 
+                        <button
                             onClick={() => loginWithGoogle()}
                             className="w-full bg-white text-slate-950 font-bold py-3.5 rounded-2xl flex items-center justify-center space-x-3 hover:bg-slate-100 transition-colors active:scale-[0.98]"
                         >
-                            <img className="h-5 w-5" src="https://www.svgrepo.com/show/475656/google.svg" alt="Google" />
+                            <img className="h-5 w-5" src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" alt="Google" />
                             <span>Continue with Google</span>
                         </button>
                     </div>

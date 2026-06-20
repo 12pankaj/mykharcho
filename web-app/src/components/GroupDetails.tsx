@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GroupService } from '../api/shared/apiService';
-import { ArrowLeft, UserPlus, Receipt, CreditCard, Users, Download } from 'lucide-react';
+import { ArrowLeft, UserPlus, Receipt, CreditCard, Users, Download, ArrowRight } from 'lucide-react';
 
 const GroupDetails: React.FC = () => {
     const { id } = useParams();

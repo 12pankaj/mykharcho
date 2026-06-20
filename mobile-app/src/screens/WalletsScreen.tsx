@@ -1,25 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
-import CustomBottomSheet from '../components/CustomBottomSheet';
-import { Wallet as WalletIcon, Plus, CreditCard, Landmark, Coins, X, Trash2, Edit2 } from 'lucide-react-native';
+import { Wallet as WalletIcon, Plus, CreditCard, Landmark, Coins, Trash2, Edit2 } from 'lucide-react-native';
 import { WalletService, UserService } from '../api/apiService';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 export default function WalletsScreen() {
+    const navigation = useNavigation<any>();
     const [wallets, setWallets] = useState([]);
     const [profile, setProfile] = useState<any>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    // Form State
-    const [sheetVisible, setSheetVisible] = useState(false);
-    const [editingWalletId, setEditingWalletId] = useState<number | null>(null);
-    const [walletName, setWalletName] = useState('');
-    const [walletType, setWalletType] = useState('Bank');
-    const [balance, setBalance] = useState('');
-    const [submitting, setSubmitting] = useState(false);
 
     const fetchWallets = async () => {
         try {
@@ -36,9 +29,11 @@ export default function WalletsScreen() {
         }
     };
 
-    useEffect(() => {
-        fetchWallets();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchWallets();
+        }, [])
+    );
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -46,54 +41,16 @@ export default function WalletsScreen() {
         setRefreshing(false);
     };
 
-    const openCreateSheet = () => {
+    const openCreate = () => {
         if (profile && wallets.length >= profile.max_wallets) {
             Alert.alert("Limit Reached", `Your ${profile.plan_name || 'current'} plan allows a maximum of ${profile.max_wallets} wallets.`);
             return;
         }
-        setEditingWalletId(null);
-        setWalletName('');
-        setWalletType('Bank');
-        setBalance('');
-        setSheetVisible(true);
+        navigation.navigate('AddWallet');
     };
 
-    const openEditSheet = (wallet: any) => {
-        setEditingWalletId(wallet.id);
-        setWalletName(wallet.name);
-        setWalletType(wallet.type);
-        setBalance(wallet.balance.toString());
-        setSheetVisible(true);
-    };
-
-    const handleSaveWallet = async () => {
-        if (!walletName || !balance) {
-            Alert.alert("Error", "Please fill in all required fields.");
-            return;
-        }
-        
-        setSubmitting(true);
-        try {
-            const data = {
-                name: walletName,
-                type: walletType,
-                balance: parseFloat(balance)
-            };
-
-            if (editingWalletId) {
-                await WalletService.update(editingWalletId, data);
-            } else {
-                await WalletService.create(data);
-            }
-            
-            setSheetVisible(false);
-            fetchWallets();
-            Alert.alert("Success", editingWalletId ? "Wallet updated successfully" : "Wallet created successfully");
-        } catch (err) {
-            Alert.alert("Error", "Failed to save wallet");
-        } finally {
-            setSubmitting(false);
-        }
+    const openEdit = (wallet: any) => {
+        navigation.navigate('AddWallet', { editingWallet: wallet });
     };
 
     const handleDeleteWallet = (id: string) => {
@@ -160,7 +117,7 @@ export default function WalletsScreen() {
                     </View>
                 )}
 
-                <TouchableOpacity style={styles.addWalletBtn} onPress={openCreateSheet}>
+                <TouchableOpacity style={styles.addWalletBtn} onPress={openCreate}>
                     <View style={styles.addIconContainer}>
                         <Plus color={'#000'} size={24} />
                     </View>
@@ -179,7 +136,7 @@ export default function WalletsScreen() {
                                 </View>
                             </View>
                             <View style={styles.actionIcons}>
-                                <TouchableOpacity onPress={() => openEditSheet(wallet)} style={styles.iconBtn}>
+                                <TouchableOpacity onPress={() => openEdit(wallet)} style={styles.iconBtn}>
                                     <Edit2 color={Colors.textSecondary} size={20} />
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => handleDeleteWallet(wallet.id)} style={styles.iconBtn}>
@@ -193,54 +150,7 @@ export default function WalletsScreen() {
                 ))}
             </ScrollView>
 
-            <CustomBottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} height={550}>
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>{editingWalletId ? 'Edit Wallet' : 'Create Wallet'}</Text>
-                    <TouchableOpacity onPress={() => setSheetVisible(false)}>
-                        <X color={Colors.textSecondary} size={24} />
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={styles.inputLabel}>Wallet Name</Text>
-                <TextInput 
-                    style={styles.input} 
-                    placeholder="e.g. HDFC Bank, Secret Stash" 
-                    placeholderTextColor={Colors.textSecondary}
-                    value={walletName}
-                    onChangeText={setWalletName}
-                />
-
-                <Text style={styles.inputLabel}>Balance (₹)</Text>
-                <TextInput 
-                    style={styles.input} 
-                    keyboardType="numeric" 
-                    placeholder="0.00" 
-                    placeholderTextColor={Colors.textSecondary}
-                    value={balance}
-                    onChangeText={setBalance}
-                />
-
-                <Text style={styles.inputLabel}>Type</Text>
-                <View style={styles.typeSelectorRow}>
-                    {['Bank', 'Cash', 'Credit Card'].map(type => (
-                        <TouchableOpacity 
-                            key={type}
-                            style={[styles.typeBtn, walletType === type && { backgroundColor: Colors.primary }]} 
-                            onPress={() => setWalletType(type)}
-                        >
-                            <Text style={[styles.typeBtnText, walletType === type && { color: '#000' }]}>{type}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <TouchableOpacity 
-                    style={[styles.submitBtn, submitting && { opacity: 0.7 }]} 
-                    onPress={handleSaveWallet}
-                    disabled={submitting}
-                >
-                    {submitting ? <ActivityIndicator color="#000" /> : <Text style={styles.submitBtnText}>{editingWalletId ? 'Update Wallet' : 'Save Wallet'}</Text>}
-                </TouchableOpacity>
-            </CustomBottomSheet>
+            {/* Replaced bottom sheet with AddWalletScreen */}
         </View>
     );
 }

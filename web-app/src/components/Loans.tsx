@@ -14,7 +14,7 @@ const Loans: React.FC = () => {
     const [allTransactions, setAllTransactions] = useState<any[]>([]);
     
     // Derived state for history
-    const loanTransactions = selectedContract ? allTransactions.filter(tx => tx.notes && tx.notes.includes(`Contract #${selectedContract.id}`)) : [];
+    const loanTransactions = selectedContract ? allTransactions.filter(tx => tx.notes && tx.notes.includes(`Contract #${selectedContract.id.substring(0,8)}`)) : [];
     
     // UI State
     const [isAddContractOpen, setIsAddContractOpen] = useState(false);

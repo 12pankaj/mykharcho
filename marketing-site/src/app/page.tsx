@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { ShieldCheck, BarChart3, Clock, CheckCircle2, ChevronRight, Zap, Users, Star, ArrowRight, Shield, Smartphone } from 'lucide-react';
 import LiveChatWidget from '@/components/LiveChatWidget';
 
+export const dynamic = 'force-dynamic';
+
 // We'll fetch plans dynamically from the backend on each request
 async function getPlans() {
     try {
-        const res = await fetch('http://localhost:5010/api/public/plans', { cache: 'no-store' });
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5010/api';
+        const res = await fetch(`${apiUrl}/public/plans`, { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch plans');
         const data = await res.json();
         return data.plans || [];
@@ -24,13 +27,13 @@ export default async function Home() {
             <nav className="fixed top-0 left-0 right-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/logo.jpeg" alt="Logo" className="w-12 h-12 rounded-xl object-cover border-2 border-[#c1522d]" />
+                        <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-xl object-cover border-2 border-[#c1522d]" />
                         <span className="text-2xl font-black tracking-tight text-white">My<span className="text-[#c1522d]">Kharcho</span></span>
                     </div>
                     <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-300">
                         <Link href="#features" className="hover:text-white transition-colors">Features</Link>
                         <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-                        <Link href="http://localhost:5173/login" className="px-6 py-2.5 bg-[#c1522d] text-white rounded-full hover:bg-orange-700 transition-all shadow-lg shadow-[#c1522d]/20">
+                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className="px-6 py-2.5 bg-[#c1522d] text-white rounded-full hover:bg-orange-700 transition-all shadow-lg shadow-[#c1522d]/20">
                             Dashboard Login
                         </Link>
                     </div>
@@ -51,7 +54,7 @@ export default async function Home() {
                         Track daily expenses, manage loans with friends, generate EMI statements, and automate your entire financial ecosystem in one beautiful app.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link href="http://localhost:5173/signup" className="w-full sm:w-auto px-8 py-4 bg-[#c1522d] text-white rounded-full font-black text-lg hover:bg-orange-700 transition-all shadow-xl shadow-[#c1522d]/20 flex items-center justify-center gap-2">
+                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className="w-full sm:w-auto px-8 py-4 bg-[#c1522d] text-white rounded-full font-black text-lg hover:bg-orange-700 transition-all shadow-xl shadow-[#c1522d]/20 flex items-center justify-center gap-2">
                             Get Started Free <ChevronRight size={20} />
                         </Link>
                         <button className="w-full sm:w-auto px-8 py-4 bg-[#0c3468] text-white border border-[#344c77] rounded-full font-black text-lg hover:bg-[#344c77] transition-all">
@@ -183,7 +186,7 @@ export default async function Home() {
                                             </div>
                                         )}
                                     </div>
-                                    <Link href="http://localhost:5173/signup" className={`block text-center w-full py-4 rounded-2xl font-black transition-all ${isPro ? 'bg-white text-[#c1522d] hover:bg-slate-50' : 'bg-[#08172c] text-white hover:bg-[#061224] border border-[#344c77]'
+                                    <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className={`block text-center w-full py-4 rounded-2xl font-black transition-all ${isPro ? 'bg-white text-[#c1522d] hover:bg-slate-50' : 'bg-[#08172c] text-white hover:bg-[#061224] border border-[#344c77]'
                                         }`}>
                                         Get Started
                                     </Link>

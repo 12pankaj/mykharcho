@@ -5,19 +5,15 @@ import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 import { Users, Plus, ArrowRight } from 'lucide-react-native';
 import { GroupService } from '../api/apiService';
-import CustomBottomSheet from '../components/CustomBottomSheet';
 
 export default function GroupsScreen({ navigation }: any) {
     const [groups, setGroups] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isSheetVisible, setSheetVisible] = useState(false);
-    const [newGroupName, setNewGroupName] = useState('');
-    const [newGroupDesc, setNewGroupDesc] = useState('');
 
     const fetchGroups = async () => {
         try {
             const res = await GroupService.getGroups();
-            setGroups(res.data);
+            setGroups(res.data?.groups || []);
         } catch (error) {
             console.error("Failed to fetch groups", error);
         } finally {
@@ -32,17 +28,8 @@ export default function GroupsScreen({ navigation }: any) {
         return unsubscribe;
     }, [navigation]);
 
-    const handleCreateGroup = async () => {
-        if (!newGroupName) return;
-        try {
-            await GroupService.createGroup({ name: newGroupName, description: newGroupDesc });
-            setSheetVisible(false);
-            setNewGroupName('');
-            setNewGroupDesc('');
-            fetchGroups();
-        } catch (error) {
-            Alert.alert("Error", "Could not create group");
-        }
+    const openCreateGroup = () => {
+        navigation.navigate('AddGroup', { refreshCallback: fetchGroups });
     };
 
     const renderGroup = ({ item }: { item: any }) => (
@@ -86,30 +73,9 @@ export default function GroupsScreen({ navigation }: any) {
                 />
             )}
 
-            <TouchableOpacity style={styles.fab} onPress={() => setSheetVisible(true)}>
+            <TouchableOpacity style={styles.fab} onPress={openCreateGroup}>
                 <Plus color={Colors.white} size={28} />
             </TouchableOpacity>
-
-            <CustomBottomSheet visible={isSheetVisible} onClose={() => setSheetVisible(false)} height={400}>
-                <Text style={styles.sheetTitle}>Create New Group</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Group Name (e.g. Goa Trip)"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={newGroupName}
-                    onChangeText={setNewGroupName}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Description (Optional)"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={newGroupDesc}
-                    onChangeText={setNewGroupDesc}
-                />
-                <TouchableOpacity style={styles.saveBtn} onPress={handleCreateGroup}>
-                    <Text style={styles.saveBtnText}>Create</Text>
-                </TouchableOpacity>
-            </CustomBottomSheet>
         </View>
     );
 }
@@ -156,8 +122,8 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: 'absolute',
-        bottom: 30,
-        right: 30,
+        bottom: 100,
+        right: 24,
         width: 60,
         height: 60,
         borderRadius: 30,

@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL configured for DevTunnels so the APK can be shared and tested externally
-const API_BASE_URL = 'https://d7nql637-5010.inc1.devtunnels.ms/api'; 
+const API_BASE_URL = 'http://72.60.222.102:5010/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -24,7 +24,7 @@ api.interceptors.request.use((config) => {
     if (currentToken) {
         config.headers.set('Authorization', `Bearer ${currentToken.trim()}`);
     }
-    
+
     // Bypass DevTunnels warning page
     config.headers.set('x-ms-devtunnel-skip', 'true');
     config.headers.set('ngrok-skip-browser-warning', 'true');

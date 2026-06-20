@@ -40,7 +40,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
 
     const getProfilePic = () => {
         if (profile?.profile_pic) {
-            return `http://localhost:5010${profile.profile_pic}`;
+            return `http://72.60.222.102:5010${profile.profile_pic}`;
         }
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'Admin')}&background=0ea5e9&color=fff&bold=true`;
     };
@@ -50,7 +50,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
             {/* Admin Sidebar */}
             <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r border-slate-800/50 bg-[#0c3468] transition-all duration-500 ease-in-out flex-col z-50`}>
                 <div className="p-8 flex items-center gap-4 cursor-pointer" onClick={() => navigate('/admin-portal')}>
-                    <img src="/logo.jpeg" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
                     {isSidebarOpen && (
                         <div className="animate-in fade-in duration-700">
                             <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>

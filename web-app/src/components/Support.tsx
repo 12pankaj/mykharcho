@@ -157,7 +157,7 @@ const Support: React.FC = () => {
                                     <div>
                                         <h3 className="text-xl font-black text-white">{selectedTicket.subject}</h3>
                                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1 flex items-center gap-2">
-                                            <Clock size={12} /> Ticket ID: #{selectedTicket.id} • Created {new Date(selectedTicket.created_at).toLocaleString()}
+                                            <Clock size={12} /> Ticket ID: #{selectedTicket.id.substring(0,8)} • Created {new Date(selectedTicket.created_at).toLocaleString()}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">

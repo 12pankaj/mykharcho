@@ -5,11 +5,11 @@
     "scheme": "mykharcho",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.jpeg",
+    "icon": "./assets/newlogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/logo.jpeg",
+      "image": "./assets/newlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#08172c"
     },
@@ -20,14 +20,14 @@
       "package": "com.mykharcho.app",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.jpeg",
+        "foregroundImage": "./assets/newlogo.png",
         "backgroundColor": "#08172c"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/logo.jpeg"
+      "favicon": "./assets/newlogo.png"
     },
     "plugins": [
       "expo-web-browser",

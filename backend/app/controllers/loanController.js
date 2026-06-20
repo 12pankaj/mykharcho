@@ -70,7 +70,7 @@ exports.createContract = async (req, res) => {
             
             await db.query(
                 'INSERT INTO transactions (user_id, wallet_id, amount, type, category, notes) VALUES ($1, $2, $3, $4, $5, $6)',
-                [req.user.id, walletId, principal, txType, 'Loan Principal', `Principal ${txType === 'Income' ? 'received' : 'disbursed'} for Contract #${contractId}`]
+                [req.user.id, walletId, principal, txType, 'Loan Principal', `Principal ${txType === 'Income' ? 'received' : 'disbursed'} for Contract #${contractId.substring(0,8)}`]
             );
 
             await db.query(
@@ -247,7 +247,7 @@ exports.payInstallment = async (req, res) => {
 
         await db.query(
             'INSERT INTO transactions (user_id, wallet_id, amount, type, category, notes) VALUES ($1, $2, $3, $4, $5, $6)',
-            [req.user.id, walletId, paidAmount, txType, 'Loan EMI', `EMI Payment for Contract #${emi.contract_id}`]
+            [req.user.id, walletId, paidAmount, txType, 'Loan EMI', `EMI Payment for Contract #${emi.contract_id.substring(0,8)}`]
         );
 
         await db.query(

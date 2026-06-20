@@ -15,7 +15,8 @@ export default function SupportTicketsScreen() {
     // Form State for New Ticket
     const [sheetVisible, setSheetVisible] = useState(false);
     const [subject, setSubject] = useState('');
-    const [message, setMessage] = useState('');
+    const [description, setDescription] = useState('');
+    const [priority, setPriority] = useState('Normal');
     const [submitting, setSubmitting] = useState(false);
 
     // Chat State
@@ -41,6 +42,27 @@ export default function SupportTicketsScreen() {
         fetchTickets();
     }, []);
 
+    const fetchMessages = async (ticketId: string) => {
+        try {
+            const res = await SupportService.getMessages(ticketId);
+            setMessages(res.data.messages || []);
+        } catch (err) {
+            console.error('Failed to load messages');
+        }
+    };
+
+    useEffect(() => {
+        let interval: any;
+        if (chatVisible && selectedTicket) {
+            interval = setInterval(() => {
+                fetchMessages(selectedTicket.id);
+            }, 5000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [chatVisible, selectedTicket]);
+
     const onRefresh = async () => {
         setRefreshing(true);
         await fetchTickets();
@@ -48,16 +70,17 @@ export default function SupportTicketsScreen() {
     };
 
     const handleCreateTicket = async () => {
-        if (!subject || !message) {
+        if (!subject || !description) {
             Alert.alert("Error", "Please fill in all fields.");
             return;
         }
         setSubmitting(true);
         try {
-            await SupportService.createTicket({ subject, message });
+            await SupportService.createTicket({ subject, description, priority });
             setSheetVisible(false);
             setSubject('');
-            setMessage('');
+            setDescription('');
+            setPriority('Normal');
             fetchTickets();
             Alert.alert("Success", "Support ticket created");
         } catch (err) {
@@ -72,10 +95,7 @@ export default function SupportTicketsScreen() {
         setChatVisible(true);
         setLoadingMessages(true);
         try {
-            const res = await SupportService.getMessages(ticket.id);
-            setMessages(res.data.messages || []);
-        } catch (err) {
-            console.error('Failed to load messages');
+            await fetchMessages(ticket.id);
         } finally {
             setLoadingMessages(false);
         }
@@ -112,7 +132,7 @@ export default function SupportTicketsScreen() {
                     </TouchableOpacity>
                     <View style={{ flex: 1, marginLeft: 8 }}>
                         <Text style={styles.chatTitle} numberOfLines={1}>{selectedTicket.subject}</Text>
-                        <Text style={styles.chatSubtitle}>Ticket #{selectedTicket.id} • {selectedTicket.status}</Text>
+                        <Text style={styles.chatSubtitle}>Ticket #{selectedTicket.id.substring(0,8)} • {selectedTicket.status}</Text>
                     </View>
                 </View>
 
@@ -131,7 +151,7 @@ export default function SupportTicketsScreen() {
                                     <View key={msg.id} style={[styles.messageWrapper, isUser ? styles.messageUser : styles.messageAgent]}>
                                         <View style={[styles.messageBubble, isUser ? styles.bubbleUser : styles.bubbleAgent]}>
                                             <Text style={[styles.messageText, isUser ? styles.textUser : styles.textAgent]}>
-                                                {msg.message}
+                                                {msg.message || msg.description}
                                             </Text>
                                             <Text style={[styles.messageTime, isUser ? styles.timeUser : styles.timeAgent]}>
                                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -223,14 +243,35 @@ export default function SupportTicketsScreen() {
                     onChangeText={setSubject}
                 />
 
-                <Text style={styles.inputLabel}>Message</Text>
+                <Text style={styles.inputLabel}>Priority</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+                    {['Low', 'Normal', 'High', 'Urgent'].map(p => (
+                        <TouchableOpacity 
+                            key={p} 
+                            style={[
+                                styles.priorityBtn, 
+                                priority === p && styles.priorityBtnActive
+                            ]}
+                            onPress={() => setPriority(p)}
+                        >
+                            <Text style={[
+                                styles.priorityBtnText, 
+                                priority === p && styles.priorityBtnTextActive
+                            ]}>
+                                {p}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <Text style={styles.inputLabel}>Description</Text>
                 <TextInput 
                     style={[styles.input, { height: 120, textAlignVertical: 'top' }]} 
-                    placeholder="Please explain the issue in detail..." 
+                    placeholder="Detailed explanation of the problem..." 
                     placeholderTextColor={Colors.textSecondary}
                     multiline
-                    value={message}
-                    onChangeText={setMessage}
+                    value={description}
+                    onChangeText={setDescription}
                 />
 
                 <TouchableOpacity 
@@ -358,6 +399,26 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
+    },
+    priorityBtn: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        alignItems: 'center',
+    },
+    priorityBtnActive: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+    },
+    priorityBtnText: {
+        color: Colors.textSecondary,
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    priorityBtnTextActive: {
+        color: '#000',
     },
     submitBtn: {
         flexDirection: 'row',

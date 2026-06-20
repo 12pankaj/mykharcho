@@ -47,7 +47,7 @@ export default function LoginScreen({ navigation }: any) {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
             const idToken = userInfo.idToken || userInfo.data?.idToken; // handle varying versions
-            
+
             if (idToken) {
                 const res = await AuthService.googleLogin(idToken);
                 if (res.data.token) {
@@ -107,15 +107,15 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.container}
         >
             <SafeAreaView style={styles.safeArea}>
-                <KeyboardAvoidingView 
+                <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
                     <View style={styles.headerContainer}>
                         <View style={styles.logoContainer}>
-                            <Image 
-                                source={require('../../assets/logo.jpeg')} 
-                                style={{ width: 100, height: 100, borderRadius: 30 }} 
+                            <Image
+                                source={require('../../assets/newlogo.png')}
+                                style={{ width: 100, height: 100, borderRadius: 30 }}
                                 resizeMode="cover"
                             />
                         </View>
@@ -130,7 +130,7 @@ export default function LoginScreen({ navigation }: any) {
 
                         <View style={styles.inputGroup}>
                             <Mail size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                            <TextInput 
+                            <TextInput
                                 style={styles.input}
                                 placeholder="Email Address"
                                 placeholderTextColor={Colors.textSecondary}
@@ -143,7 +143,7 @@ export default function LoginScreen({ navigation }: any) {
 
                         <View style={styles.inputGroup}>
                             <Lock size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                            <TextInput 
+                            <TextInput
                                 style={styles.input}
                                 placeholder="Password"
                                 placeholderTextColor={Colors.textSecondary}
@@ -154,8 +154,8 @@ export default function LoginScreen({ navigation }: any) {
                         </View>
 
                         <View style={styles.optionsContainer}>
-                            <TouchableOpacity 
-                                style={styles.rememberMeContainer} 
+                            <TouchableOpacity
+                                style={styles.rememberMeContainer}
                                 onPress={() => setRememberMe(!rememberMe)}
                             >
                                 {rememberMe ? (
@@ -166,7 +166,7 @@ export default function LoginScreen({ navigation }: any) {
                                 <Text style={styles.rememberMeText}>Remember me</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.forgotPassword}
                                 onPress={() => navigation.navigate('ForgotPassword')}
                             >
@@ -174,8 +174,8 @@ export default function LoginScreen({ navigation }: any) {
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity 
-                            style={styles.loginButton} 
+                        <TouchableOpacity
+                            style={styles.loginButton}
                             onPress={handleLogin}
                             disabled={loading}
                         >
@@ -192,15 +192,15 @@ export default function LoginScreen({ navigation }: any) {
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
-                        
+
                         <View style={styles.dividerContainer}>
                             <View style={styles.divider} />
                             <Text style={styles.dividerText}>Elite Access</Text>
                             <View style={styles.divider} />
                         </View>
 
-                        <TouchableOpacity 
-                            style={styles.googleButton} 
+                        <TouchableOpacity
+                            style={styles.googleButton}
                             onPress={handleNativeGoogleLogin}
                             disabled={loading}
                         >

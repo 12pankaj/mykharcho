@@ -287,19 +287,21 @@ const TicketsTable = ({ tickets, agents, onAssign, onResolve, onSelect, loading 
                             <td className="p-6">
                                 <div className="flex flex-col gap-2">
                                     <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                                        ticket.priority === 'High' ? 'bg-rose-500/10 text-rose-500' :
-                                        ticket.priority === 'Urgent' ? 'bg-red-500/10 text-red-500' :
-                                        'bg-blue-500/10 text-blue-500'
+                                        ticket.priority === 'Urgent' ? 'bg-rose-500/10 text-rose-500' :
+                                        ticket.priority === 'High' ? 'bg-orange-500/10 text-orange-500' :
+                                        ticket.priority === 'Normal' ? 'bg-blue-500/10 text-blue-500' :
+                                        'bg-slate-500/10 text-slate-400'
                                     }`}>
-                                        {ticket.priority}
+                                        {ticket.priority || 'Normal'}
                                     </span>
-                                    <span className={`text-[11px] font-bold ${
-                                        ticket.status === 'Resolved' ? 'text-orange-500' :
-                                        ticket.status === 'In Progress' ? 'text-blue-400' :
-                                        'text-amber-400'
+                                    <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider mt-2 ${
+                                        ticket.status === 'Open' ? 'bg-orange-600/10 text-orange-500 border border-orange-600/20' : 
+                                        ticket.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 
+                                        'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                                     }`}>
                                         {ticket.status}
                                     </span>
+                                    <div className="text-[10px] text-slate-500 font-mono mt-2">#{String(ticket.id).substring(0,8)}</div>
                                 </div>
                             </td>
                             <td className="p-6">
@@ -570,7 +572,7 @@ const PlanManagement = () => {
                     <div key={plan.id} className="bg-slate-950 border border-slate-800 rounded-[2rem] p-8 hover:border-blue-500/30 transition-all">
                         <div className="flex justify-between items-center mb-6">
                             <h4 className="text-xl font-black text-white">{plan.name}</h4>
-                            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg">ID: {plan.id}</span>
+                            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg">ID: {plan.id.substring(0,8)}</span>
                         </div>
                         <div className="space-y-6">
                             <div>

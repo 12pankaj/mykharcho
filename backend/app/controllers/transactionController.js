@@ -14,15 +14,23 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.addTransaction = async (req, res) => {
-    const { walletId, amount, type, category, notes } = req.body;
+    const { walletId, amount, type, category, notes, transaction_date } = req.body;
     try {
         // Start transaction
         await db.query('BEGIN');
 
-        const newTx = await db.query(
-            'INSERT INTO transactions (user_id, wallet_id, amount, type, category, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [req.user.id, walletId, amount, type, category, notes]
-        );
+        let newTx;
+        if (transaction_date) {
+            newTx = await db.query(
+                'INSERT INTO transactions (user_id, wallet_id, amount, type, category, notes, transaction_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+                [req.user.id, walletId, amount, type, category, notes, transaction_date]
+            );
+        } else {
+            newTx = await db.query(
+                'INSERT INTO transactions (user_id, wallet_id, amount, type, category, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                [req.user.id, walletId, amount, type, category, notes]
+            );
+        }
 
         // Update wallet balance
         const multiplier = type === 'Income' ? 1 : -1;
@@ -110,7 +118,7 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.updateTransaction = async (req, res) => {
     const { id } = req.params;
-    const { walletId, amount, type, category, notes } = req.body;
+    const { walletId, amount, type, category, notes, transaction_date } = req.body;
     try {
         await db.query('BEGIN');
         
@@ -127,10 +135,18 @@ exports.updateTransaction = async (req, res) => {
         );
 
         // 3. Apply new transaction and balance
-        const updatedTx = await db.query(
-            'UPDATE transactions SET wallet_id = $1, amount = $2, type = $3, category = $4, notes = $5 WHERE id = $6 AND user_id = $7 RETURNING *',
-            [walletId, amount, type, category, notes, id, req.user.id]
-        );
+        let updatedTx;
+        if (transaction_date) {
+            updatedTx = await db.query(
+                'UPDATE transactions SET wallet_id = $1, amount = $2, type = $3, category = $4, notes = $5, transaction_date = $6 WHERE id = $7 AND user_id = $8 RETURNING *',
+                [walletId, amount, type, category, notes, transaction_date, id, req.user.id]
+            );
+        } else {
+            updatedTx = await db.query(
+                'UPDATE transactions SET wallet_id = $1, amount = $2, type = $3, category = $4, notes = $5 WHERE id = $6 AND user_id = $7 RETURNING *',
+                [walletId, amount, type, category, notes, id, req.user.id]
+            );
+        }
 
         const newMultiplier = type === 'Income' ? 1 : -1;
         await db.query(
@@ -143,7 +159,7 @@ exports.updateTransaction = async (req, res) => {
     } catch (err) {
         await db.query('ROLLBACK');
         console.error(err);
-        res.status(500).json({ message: err.message || 'Error updating transaction' });
+        res.status(500).json({ message: 'Error updating transaction' });
     }
 };
 
@@ -170,6 +186,6 @@ exports.deleteTransaction = async (req, res) => {
     } catch (err) {
         await db.query('ROLLBACK');
         console.error(err);
-        res.status(500).json({ message: err.message || 'Error deleting transaction' });
+        res.status(500).json({ message: 'Error deleting transaction' });
     }
 };

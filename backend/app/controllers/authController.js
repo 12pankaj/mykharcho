@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
+const emailService = require('../services/emailService');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -176,8 +177,28 @@ exports.forgotPassword = async (req, res) => {
             [tokenHash, expires, user.id]
         );
 
-        // In a real app, send this via email.
-        console.log(`[SIMULATED EMAIL] Password reset token for ${email}: ${resetToken}`);
+        // Send actual email using Nodemailer
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+        const subject = 'Password Reset Request - MyKharcho';
+        const text = `You requested a password reset. Please click the following link to reset your password:\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
+        const html = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h2 style="color: #c1522d; text-align: center;">MyKharcho</h2>
+                <h3>Password Reset Request</h3>
+                <p>Hello,</p>
+                <p>We received a request to reset your password. Click the button below to choose a new password:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="background-color: #c1522d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+                </div>
+                <p>Or copy and paste this link into your browser:</p>
+                <p style="word-break: break-all; color: #555;">${resetLink}</p>
+                <p>If you did not request a password reset, please ignore this email. This link will expire in 1 hour.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="font-size: 12px; color: #888; text-align: center;">&copy; ${new Date().getFullYear()} MyKharcho. All rights reserved.</p>
+            </div>
+        `;
+
+        await emailService.sendEmail(email, subject, text, html);
 
         res.json({ message: 'Password reset link sent to email' });
     } catch (err) {

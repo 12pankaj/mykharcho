@@ -168,8 +168,14 @@ require('./app/services/cronJob');
 
 // Catch-all for 404s
 app.use((req, res) => {
-    console.log(`404 Hit: ${req.method} ${req.url}`);
-    res.status(404).json({ message: `Route ${req.url} not found on this server.` });
+    console.error(`[404 Error] Route not found: ${req.method} ${req.url}`);
+    res.status(404).json({ message: 'The requested resource could not be found. Please check your app version or contact support.' });
+});
+
+// Global Error Handler (500)
+app.use((err, req, res, next) => {
+    console.error(`[500 Error] Internal Server Error: ${err.message}`, err.stack);
+    res.status(500).json({ message: 'An internal server error occurred. Our team has been notified. Please try again later.' });
 });
 
 const http = require('http');

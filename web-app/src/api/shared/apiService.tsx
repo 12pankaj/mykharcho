@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL can be configured via environment variables in web/mobile projects
-const API_BASE_URL = 'http://localhost:5010/api'; 
+const API_BASE_URL = 'http://72.60.222.102:5010/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,

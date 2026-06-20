@@ -30,7 +30,7 @@ const Transactions: React.FC = () => {
 
     // Form & Filter States
     const [filters, setFilters] = useState({ startDate: '', endDate: '', category: '', walletId: '' });
-    const [txForm, setTxForm] = useState({ walletId: '', amount: 0, type: isIncomeView ? 'Income' : 'Expense', category: '', notes: '' });
+    const [txForm, setTxForm] = useState({ walletId: '', amount: 0, type: isIncomeView ? 'Income' : 'Expense', category: '', notes: '', transaction_date: new Date().toISOString().split('T')[0] });
     const [ruleForm, setRuleForm] = useState({ walletId: '', name: '', amount: 0, type: isIncomeView ? 'Income' : 'Expense', category: '', frequency: 'Monthly', nextRunDate: '' });
 
     const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -97,7 +97,7 @@ const Transactions: React.FC = () => {
             }
             setIsAddTxOpen(false);
             setEditingTx(null);
-            setTxForm(prev => ({ ...prev, amount: 0, category: '', notes: '' }));
+            setTxForm(prev => ({ ...prev, amount: 0, category: '', notes: '', transaction_date: new Date().toISOString().split('T')[0] }));
             loadData();
         } catch (err: any) {
             showNotification(err.response?.data?.message || err.message || 'Failed to process transaction', 'error');
@@ -139,6 +139,7 @@ const Transactions: React.FC = () => {
                     amount: parsed.amount || 0,
                     category: parsed.category || '',
                     notes: parsed.description || '',
+                    transaction_date: parsed.date || new Date().toISOString().split('T')[0],
                     type: parsed.type === 'Income' ? 'Income' : 'Expense',
                     ...(matchedWalletId ? { walletId: matchedWalletId } : {})
                 }));
@@ -419,7 +420,10 @@ const Transactions: React.FC = () => {
                                     <input type="number" required value={txForm.amount} onChange={e => setTxForm({...txForm, amount: parseFloat(e.target.value) || 0})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold tabular-nums" />
                                 </div>
                             </div>
-                            <input type="text" placeholder="Category (e.g., Salary, Rent)" required value={txForm.category} onChange={e => setTxForm({...txForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            <div className="grid grid-cols-2 gap-6">
+                                <input type="text" placeholder="Category (e.g., Salary, Rent)" required value={txForm.category} onChange={e => setTxForm({...txForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                                <input type="date" required value={txForm.transaction_date} onChange={e => setTxForm({...txForm, transaction_date: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            </div>
                             <textarea placeholder="Optional notes" value={txForm.notes} onChange={e => setTxForm({...txForm, notes: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold h-24 resize-none" />
                             <div className="flex gap-4">
                                 <button type="button" onClick={() => setIsAddTxOpen(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-black py-5 rounded-2xl transition-all">Cancel</button>

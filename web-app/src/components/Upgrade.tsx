@@ -18,7 +18,7 @@ const Upgrade: React.FC = () => {
                 
                 // Fetch public plans to map by name instead of hardcoded ID
                 // Using axios directly or assuming api is available, actually we can just use the public endpoint directly
-                const plansRes = await fetch('http://localhost:5010/api/public/plans');
+                const plansRes = await fetch('http://72.60.222.102:5010/api/public/plans');
                 const plansData = await plansRes.json();
                 setPlans(plansData.plans || []);
             } catch (err) {

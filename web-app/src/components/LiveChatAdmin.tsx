@@ -12,7 +12,7 @@ export default function LiveChatAdmin() {
 
     useEffect(() => {
         // Connect to Socket.io server
-        const newSocket = io('http://localhost:5010');
+        const newSocket = io('http://72.60.222.102:5010');
         setSocket(newSocket);
 
         newSocket.on('connect', () => {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions, TouchableWithoutFeedback, Modal, PanResponder, KeyboardAvoidingView, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface CustomBottomSheetProps {
     visible: boolean;
@@ -12,6 +13,7 @@ interface CustomBottomSheetProps {
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function CustomBottomSheet({ visible, onClose, children, height = SCREEN_HEIGHT * 0.6 }: CustomBottomSheetProps) {
+    const insets = useSafeAreaInsets();
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -75,7 +77,8 @@ export default function CustomBottomSheet({ visible, onClose, children, height =
                         styles.sheet, 
                         { 
                             height,
-                            transform: [{ translateY: slideAnim }] 
+                            transform: [{ translateY: slideAnim }],
+                            paddingBottom: Math.max(insets.bottom, 24) + (Platform.OS === 'android' ? 20 : 0)
                         }
                     ]}
                     {...panResponder.panHandlers}

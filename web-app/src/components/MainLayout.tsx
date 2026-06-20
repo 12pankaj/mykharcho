@@ -54,7 +54,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
     const getProfilePic = () => {
         if (!profile?.profile_pic) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=2563eb&color=fff&size=256&font-size=0.4&bold=true`;
         if (profile.profile_pic.startsWith('http')) return profile.profile_pic;
-        return `http://localhost:5010${profile.profile_pic}`;
+        return `http://72.60.222.102:5010${profile.profile_pic}`;
     };
 
     const navItems = [
@@ -80,7 +80,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
             {/* Sidebar - Desktop */}
             <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r border-slate-800/50 bg-[#0c3468] transition-all duration-500 ease-in-out flex-col z-50`}>
                 <div className="p-8 flex items-center gap-4 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    <img src="/logo.jpeg" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
                     {isSidebarOpen && (
                         <div className="animate-in fade-in duration-700">
                             <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
@@ -111,7 +111,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                     <aside className="w-[280px] h-full border-r border-slate-800/50 bg-[#0c3468] flex flex-col" onClick={e => e.stopPropagation()}>
                         <div className="p-8 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <img src="/logo.jpeg" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                                <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
                                 <div>
                                     <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
                                 </div>
@@ -147,7 +147,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                         
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex items-center gap-2">
-                            <img src="/logo.jpeg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg flex-shrink-0 object-cover border border-[#c1522d]"/>
+                            <img src="/newlogo.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg flex-shrink-0 object-cover border border-[#c1522d]"/>
                             <span className="text-lg font-black text-white tracking-tighter leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
                         </div>
 

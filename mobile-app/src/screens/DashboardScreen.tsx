@@ -10,27 +10,16 @@ import { registerForPushNotificationsAsync } from '../services/NotificationServi
 import { TextInput, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function DashboardScreen() {
     const { user } = useAuth();
+    const navigation = useNavigation();
     const [profile, setProfile] = useState<any>(null);
     const [stats, setStats] = useState({ balance: 0, income: 0, expense: 0, incomeTrend: '+0%', expenseTrend: '+0%' });
     const [transactions, setTransactions] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
-
-    // Form State
-    const [txSheetVisible, setTxSheetVisible] = useState(false);
-    const [txType, setTxType] = useState('Expense');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
-    const [notes, setNotes] = useState('');
     const [wallets, setWallets] = useState([]);
-    const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
-
-    // AI States
-    const [aiSheetVisible, setAiSheetVisible] = useState(false);
-    const [aiText, setAiText] = useState('');
-    const [isParsing, setIsParsing] = useState(false);
 
     const fetchDashboard = async () => {
         // Fetch Profile
@@ -68,9 +57,6 @@ export default function DashboardScreen() {
         try {
             const walletsRes = await WalletService.getAll();
             setWallets(walletsRes.data);
-            if (walletsRes.data.length > 0) {
-                setSelectedWallet(walletsRes.data[0].id.toString());
-            }
         } catch (err) {
             console.error('Failed to load wallets for dashboard', err);
         }
@@ -85,85 +71,6 @@ export default function DashboardScreen() {
         setRefreshing(true);
         await fetchDashboard();
         setRefreshing(false);
-    };
-
-    const handleAddTransaction = async () => {
-        if (!amount || !category) {
-            Alert.alert("Error", "Please enter amount and category");
-            return;
-        }
-        if (!selectedWallet) {
-            Alert.alert("Error", "Please select a wallet (create one first if none exist).");
-            return;
-        }
-        try {
-            await TransactionService.add({
-                walletId: selectedWallet,
-                amount: parseFloat(amount),
-                type: txType,
-                category,
-                notes: notes || 'Added from Mobile App'
-            });
-            setTxSheetVisible(false);
-            setAmount('');
-            setCategory('');
-            fetchDashboard(); // Refresh stats
-        } catch (err) {
-            console.error('Failed to add transaction');
-            Alert.alert("Error", "Failed to add transaction");
-        }
-    };
-
-    const handleAiParse = async (payload: { text?: string, imageBase64?: string }) => {
-        setIsParsing(true);
-        try {
-            const res = await AIService.parseTransaction(payload);
-            if (res.data.success) {
-                const parsed = res.data.data;
-                
-                let matchedWalletId = undefined;
-                if (parsed.walletName) {
-                    const searchName = parsed.walletName.toLowerCase();
-                    const matchedWallet = wallets.find((w: any) => 
-                        w.name.toLowerCase().includes(searchName) || searchName.includes(w.name.toLowerCase())
-                    );
-                    if (matchedWallet) {
-                        matchedWalletId = matchedWallet.id.toString();
-                    }
-                }
-
-                setTxType(parsed.type || 'Expense');
-                setAmount(parsed.amount ? parsed.amount.toString() : '');
-                setCategory(parsed.category || '');
-                setNotes(parsed.description || '');
-                if (matchedWalletId) {
-                    setSelectedWallet(matchedWalletId);
-                }
-                
-                setAiSheetVisible(false);
-                setAiText('');
-                setTxSheetVisible(true); // Open the main sheet to confirm
-            } else {
-                Alert.alert("Parsing Failed", res.data.message);
-            }
-        } catch (err) {
-            Alert.alert("Error", "Could not parse transaction.");
-        } finally {
-            setIsParsing(false);
-        }
-    };
-
-    const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            quality: 0.5,
-            base64: true,
-        });
-
-        if (!result.canceled && result.assets[0].base64) {
-            handleAiParse({ imageBase64: `data:image/jpeg;base64,${result.assets[0].base64}` });
-        }
     };
 
     const formatCurrency = (val: number) => {
@@ -227,19 +134,19 @@ export default function DashboardScreen() {
                 {/* Quick Actions */}
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={styles.actionsRow}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => { setTxType('Expense'); setTxSheetVisible(true); }}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('AddTransaction', { wallets, initialType: 'Expense', refreshCallback: fetchDashboard })}>
                         <View style={styles.actionIconContainer}>
                             <ArrowUpRight color={Colors.danger} size={24} />
                         </View>
                         <Text style={styles.actionText}>Expense</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => { setTxType('Income'); setTxSheetVisible(true); }}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('AddTransaction', { wallets, initialType: 'Income', refreshCallback: fetchDashboard })}>
                         <View style={styles.actionIconContainer}>
                             <ArrowDownRight color={Colors.success} size={24} />
                         </View>
                         <Text style={styles.actionText}>Income</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => setAiSheetVisible(true)}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('AddTransaction', { wallets, initialMode: 'smart', refreshCallback: fetchDashboard })}>
                         <View style={[styles.actionIconContainer, { borderColor: Colors.primary, borderWidth: 2 }]}>
                             <Zap color={Colors.primary} size={24} />
                         </View>
@@ -282,128 +189,7 @@ export default function DashboardScreen() {
                 </GlassCard>
             </ScrollView>
 
-            <CustomBottomSheet visible={txSheetVisible} onClose={() => setTxSheetVisible(false)} height={500}>
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Add {txType}</Text>
-                    <View style={{ flexDirection: 'row', gap: 16 }}>
-                        <TouchableOpacity onPress={() => { setTxSheetVisible(false); setAiSheetVisible(true); }}>
-                            <Zap color={Colors.primary} size={24} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setTxSheetVisible(false)}>
-                            <X color={Colors.textSecondary} size={24} />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                <View style={styles.typeSelectorRow}>
-                    <TouchableOpacity
-                        style={[styles.typeBtn, txType === 'Income' && { backgroundColor: Colors.success }]}
-                        onPress={() => setTxType('Income')}
-                    >
-                        <Text style={[styles.typeBtnText, txType === 'Income' && { color: '#000' }]}>Income</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.typeBtn, txType === 'Expense' && { backgroundColor: Colors.danger }]}
-                        onPress={() => setTxType('Expense')}
-                    >
-                        <Text style={[styles.typeBtnText, txType === 'Expense' && { color: '#000' }]}>Expense</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={styles.inputLabel}>Amount (₹)</Text>
-                <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="0.00"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={amount}
-                    onChangeText={setAmount}
-                />
-
-                <Text style={styles.inputLabel}>Category / Title</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Netflix, Salary"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={category}
-                    onChangeText={setCategory}
-                />
-
-                <Text style={styles.inputLabel}>Wallet</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24, flexGrow: 0 }}>
-                    {wallets.map((w: any) => (
-                        <TouchableOpacity 
-                            key={w.id}
-                            style={[{
-                                paddingHorizontal: 16,
-                                paddingVertical: 10,
-                                borderRadius: 20,
-                                borderWidth: 1,
-                                borderColor: Colors.border,
-                                marginRight: 8,
-                            }, selectedWallet === w.id.toString() && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
-                            onPress={() => setSelectedWallet(w.id.toString())}
-                        >
-                            <Text style={[{color: Colors.textSecondary, fontSize: 14}, selectedWallet === w.id.toString() && { color: '#000', fontWeight: 'bold' }]}>
-                                {w.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                <TouchableOpacity style={styles.submitBtn} onPress={handleAddTransaction}>
-                    <Text style={styles.submitBtnText}>Add Transaction</Text>
-                </TouchableOpacity>
-            </CustomBottomSheet>
-
-            {/* AI Smart Add Sheet */}
-            <CustomBottomSheet visible={aiSheetVisible} onClose={() => setAiSheetVisible(false)} height={400}>
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Smart Add ✨</Text>
-                    <TouchableOpacity onPress={() => setAiSheetVisible(false)}>
-                        <X color={Colors.textSecondary} size={24} />
-                    </TouchableOpacity>
-                </View>
-
-                {isParsing ? (
-                    <View style={{ alignItems: 'center', justifyContent: 'center', height: 200 }}>
-                        <ActivityIndicator size="large" color={Colors.primary} />
-                        <Text style={{ color: Colors.textSecondary, marginTop: 16 }}>Analyzing with AI...</Text>
-                    </View>
-                ) : (
-                    <>
-                        <TouchableOpacity style={styles.aiOptionBtn} onPress={pickImage}>
-                            <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(234, 179, 8, 0.1)', borderColor: 'rgba(234, 179, 8, 0.2)' }]}>
-                                <Camera color="#eab308" size={24} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.aiOptionTitle}>Scan Receipt</Text>
-                                <Text style={styles.aiOptionSub}>Upload a photo of your bill</Text>
-                            </View>
-                        </TouchableOpacity>
-
-                        <Text style={styles.orText}>OR DESCRIBE IT</Text>
-
-                        <View style={styles.aiInputContainer}>
-                            <TextInput
-                                style={styles.aiInput}
-                                placeholder="e.g. Spent 500 on dinner with friends"
-                                placeholderTextColor={Colors.textSecondary}
-                                value={aiText}
-                                onChangeText={setAiText}
-                                multiline
-                            />
-                            <TouchableOpacity
-                                style={[styles.aiSendBtn, !aiText.trim() && { opacity: 0.5 }]}
-                                onPress={() => { if (aiText.trim()) handleAiParse({ text: aiText }) }}
-                                disabled={!aiText.trim()}
-                            >
-                                <Zap color="#000" size={20} />
-                            </TouchableOpacity>
-                        </View>
-                    </>
-                )}
-            </CustomBottomSheet>
+            {/* Sheets replaced by AddTransactionScreen */}
         </View>
     );
 }

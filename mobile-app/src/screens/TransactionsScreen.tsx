@@ -3,24 +3,22 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, T
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import CustomBottomSheet from '../components/CustomBottomSheet';
-import { ArrowDownRight, ArrowUpRight, Search, Filter, Edit2, Trash2, X } from 'lucide-react-native';
+import { ArrowDownRight, ArrowUpRight, Search, Filter, Edit2, Trash2, X, Download } from 'lucide-react-native';
 import GlassCard from '../components/GlassCard';
 import { TransactionService, WalletService } from '../api/apiService';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
-export default function TransactionsScreen() {
+export default function TransactionsScreen({ navigation }: { navigation: any }) {
     const [transactions, setTransactions] = useState([]);
     const [wallets, setWallets] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Edit State
-    const [sheetVisible, setSheetVisible] = useState(false);
-    const [editingTxId, setEditingTxId] = useState<number | null>(null);
-    const [txType, setTxType] = useState('Expense');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
-    const [walletId, setWalletId] = useState('');
-    const [submitting, setSubmitting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
+    const [filterType, setFilterType] = useState('All');
+    const [filterWallet, setFilterWallet] = useState('All');
 
     const fetchData = async () => {
         try {
@@ -48,36 +46,7 @@ export default function TransactionsScreen() {
     };
 
     const openEditSheet = (tx: any) => {
-        setEditingTxId(tx.id);
-        setTxType(tx.type);
-        setAmount(tx.amount.toString());
-        setCategory(tx.category);
-        setWalletId(tx.wallet_id?.toString() || (wallets.length > 0 ? wallets[0].id.toString() : ''));
-        setSheetVisible(true);
-    };
-
-    const handleUpdateTransaction = async () => {
-        if (!amount || !category || !walletId) {
-            Alert.alert("Error", "Please fill in all fields.");
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            await TransactionService.update(editingTxId!, {
-                walletId: walletId,
-                amount: parseFloat(amount),
-                type: txType,
-                category,
-            });
-            setSheetVisible(false);
-            fetchData();
-            Alert.alert("Success", "Transaction updated");
-        } catch (err) {
-            Alert.alert("Error", "Failed to update transaction");
-        } finally {
-            setSubmitting(false);
-        }
+        navigation.navigate('AddTransaction', { editingTransaction: tx, wallets, refreshCallback: fetchData });
     };
 
     const handleDeleteTransaction = (id: string) => {
@@ -99,6 +68,55 @@ export default function TransactionsScreen() {
         ]);
     };
 
+    const filteredTransactions = transactions.filter((tx: any) => {
+        if (searchQuery && !tx.category.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        if (filterType !== 'All' && tx.type !== filterType) return false;
+        if (filterWallet !== 'All' && tx.wallet_id?.toString() !== filterWallet) return false;
+        return true;
+    });
+
+    const handleExportPDF = async () => {
+        try {
+            const html = `
+                <html>
+                    <head>
+                        <style>
+                            body { font-family: sans-serif; padding: 20px; color: #333; }
+                            h1 { color: #2563eb; margin-bottom: 5px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                            th { background-color: #f8fafc; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Transactions Report</h1>
+                        <p>Total Records: ${filteredTransactions.length}</p>
+                        <table>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                            ${filteredTransactions.map((tx: any) => `
+                                <tr>
+                                    <td>${new Date(tx.transaction_date || tx.created_at).toLocaleDateString()}</td>
+                                    <td>${tx.category}</td>
+                                    <td>${tx.type}</td>
+                                    <td>₹${parseFloat(tx.amount).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </body>
+                </html>
+            `;
+            const { uri } = await Print.printToFileAsync({ html });
+            await Sharing.shareAsync(uri);
+        } catch (err) {
+            Alert.alert("Error", "Failed to generate PDF");
+        }
+    };
+
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -115,10 +133,19 @@ export default function TransactionsScreen() {
             <View style={styles.filterRow}>
                 <View style={styles.searchBar}>
                     <Search color={Colors.textSecondary} size={18} />
-                    <Text style={styles.searchPlaceholder}>Search transactions...</Text>
+                    <TextInput 
+                        style={[styles.searchPlaceholder, { flex: 1, padding: 0 }]}
+                        placeholder="Search transactions..."
+                        placeholderTextColor={Colors.textSecondary}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
                 </View>
-                <TouchableOpacity style={styles.filterBtn}>
+                <TouchableOpacity style={styles.filterBtn} onPress={() => setIsFilterVisible(true)}>
                     <Filter color={Colors.textPrimary} size={18} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filterBtn} onPress={handleExportPDF}>
+                    <Download color={Colors.textPrimary} size={18} />
                 </TouchableOpacity>
             </View>
 
@@ -126,7 +153,7 @@ export default function TransactionsScreen() {
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
-                {transactions.map((tx: any, index: number) => {
+                {filteredTransactions.map((tx: any, index: number) => {
                     const isIncome = tx.type === 'Income';
                     return (
                         <GlassCard intensity="heavy" style={styles.txCard} key={tx.id}>
@@ -137,7 +164,7 @@ export default function TransactionsScreen() {
                                 <View>
                                     <Text style={styles.txCategory}>{tx.category}</Text>
                                     <View style={styles.txDetailsRow}>
-                                        <Text style={styles.txDate}>{new Date(tx.created_at).toLocaleDateString()}</Text>
+                                        <Text style={styles.txDate}>{new Date(tx.transaction_date || tx.created_at).toLocaleDateString()}</Text>
                                         <View style={styles.dot} />
                                         <Text style={styles.txWallet}>{tx.wallet_name || 'Wallet'}</Text>
                                     </View>
@@ -161,67 +188,52 @@ export default function TransactionsScreen() {
                 })}
             </ScrollView>
 
-            <CustomBottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} height={500}>
+            {/* Filter Bottom Sheet */}
+            <CustomBottomSheet visible={isFilterVisible} onClose={() => setIsFilterVisible(false)} height="60%">
                 <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Edit Transaction</Text>
-                    <TouchableOpacity onPress={() => setSheetVisible(false)}>
+                    <Text style={styles.sheetTitle}>Filters</Text>
+                    <TouchableOpacity onPress={() => setIsFilterVisible(false)}>
                         <X color={Colors.textSecondary} size={24} />
                     </TouchableOpacity>
                 </View>
 
-                <Text style={styles.inputLabel}>Type</Text>
-                <View style={styles.typeSelectorRow}>
-                    <TouchableOpacity 
-                        style={[styles.typeBtn, txType === 'Income' && { backgroundColor: Colors.success }]} 
-                        onPress={() => setTxType('Income')}
-                    >
-                        <Text style={[styles.typeBtnText, txType === 'Income' && { color: '#000' }]}>Income</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.typeBtn, txType === 'Expense' && { backgroundColor: Colors.danger }]} 
-                        onPress={() => setTxType('Expense')}
-                    >
-                        <Text style={[styles.typeBtnText, txType === 'Expense' && { color: '#000' }]}>Expense</Text>
-                    </TouchableOpacity>
-                </View>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <Text style={styles.inputLabel}>Type</Text>
+                    <View style={styles.typeSelectorRow}>
+                        {['All', 'Income', 'Expense'].map(type => (
+                            <TouchableOpacity 
+                                key={type}
+                                style={[styles.typeBtn, filterType === type && { backgroundColor: Colors.primary, borderColor: Colors.primary }]} 
+                                onPress={() => setFilterType(type)}
+                            >
+                                <Text style={[styles.typeBtnText, filterType === type && { color: '#000', fontWeight: 'bold' }]}>{type}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
 
-                <Text style={styles.inputLabel}>Amount (₹)</Text>
-                <TextInput 
-                    style={styles.input} 
-                    keyboardType="numeric" 
-                    value={amount}
-                    onChangeText={setAmount}
-                />
-
-                <Text style={styles.inputLabel}>Category</Text>
-                <TextInput 
-                    style={styles.input} 
-                    value={category}
-                    onChangeText={setCategory}
-                />
-
-                <Text style={styles.inputLabel}>Wallet</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24, flexGrow: 0 }}>
-                    {wallets.map((w: any) => (
+                    <Text style={styles.inputLabel}>Wallet</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24, flexGrow: 0 }}>
                         <TouchableOpacity 
-                            key={w.id}
-                            style={[styles.walletPill, walletId === w.id.toString() && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
-                            onPress={() => setWalletId(w.id.toString())}
+                            style={[styles.walletPill, filterWallet === 'All' && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
+                            onPress={() => setFilterWallet('All')}
                         >
-                            <Text style={[styles.walletPillText, walletId === w.id.toString() && { color: '#000', fontWeight: 'bold' }]}>
-                                {w.name}
-                            </Text>
+                            <Text style={[styles.walletPillText, filterWallet === 'All' && { color: '#000', fontWeight: 'bold' }]}>All</Text>
                         </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                        {wallets?.map((w: any) => (
+                            <TouchableOpacity 
+                                key={w.id}
+                                style={[styles.walletPill, filterWallet === w.id.toString() && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
+                                onPress={() => setFilterWallet(w.id.toString())}
+                            >
+                                <Text style={[styles.walletPillText, filterWallet === w.id.toString() && { color: '#000', fontWeight: 'bold' }]}>{w.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
 
-                <TouchableOpacity 
-                    style={[styles.submitBtn, submitting && { opacity: 0.7 }]} 
-                    onPress={handleUpdateTransaction}
-                    disabled={submitting}
-                >
-                    {submitting ? <ActivityIndicator color="#000" /> : <Text style={styles.submitBtnText}>Update Transaction</Text>}
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.submitBtn} onPress={() => setIsFilterVisible(false)}>
+                        <Text style={styles.submitBtnText}>Apply Filters</Text>
+                    </TouchableOpacity>
+                </ScrollView>
             </CustomBottomSheet>
         </View>
     );

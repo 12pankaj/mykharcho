@@ -18,7 +18,7 @@ export default function LiveChatWidget() {
 
     useEffect(() => {
         if (isOpen && !socket) {
-            const newSocket = io('http://localhost:5010');
+            const newSocket = io('http://72.60.222.102:5010');
             
             newSocket.on('receive_visitor_message', (data) => {
                 setMessages(prev => [...prev, { sender: 'admin', message: data.message }]);

@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 import CustomBottomSheet from '../components/CustomBottomSheet';
 import { Users, FileText, Clock, Plus, X, CheckCircle2, Circle, AlertCircle } from 'lucide-react-native';
-import { LoanService, WalletService } from '../api/apiService';
+import { LoanService, WalletService, TransactionService } from '../api/apiService';
 import { TextInput } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -19,19 +19,19 @@ export default function LoansScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState('Active Contracts');
 
-    // Form State for new contract
-    const [sheetVisible, setSheetVisible] = useState(false);
-    const [partyName, setPartyName] = useState('');
-    const [partyPhone, setPartyPhone] = useState('');
-    const [principal, setPrincipal] = useState('');
-    const [interestRate, setInterestRate] = useState('');
-    const [loanType, setLoanType] = useState('Money Given');
-    const [interestType, setInterestType] = useState('Simple');
+    // Removed form states for new contract
 
     // State for View EMIs
     const [isViewEMIsVisible, setIsViewEMIsVisible] = useState(false);
     const [selectedContract, setSelectedContract] = useState<any>(null);
     const [contractEMIs, setContractEMIs] = useState<any[]>([]);
+    const [allTransactions, setAllTransactions] = useState<any[]>([]);
+    const [contractPaymentHistory, setContractPaymentHistory] = useState<any[]>([]);
+
+    // State for Add EMI
+    const [isAddEMIVisible, setIsAddEMIVisible] = useState(false);
+    const [newEmiDate, setNewEmiDate] = useState('');
+    const [newEmiAmount, setNewEmiAmount] = useState('');
 
     // State for Pay EMI
     const [isPayVisible, setIsPayVisible] = useState(false);
@@ -41,14 +41,16 @@ export default function LoansScreen() {
 
     const fetchData = async () => {
         try {
-            const [loansRes, walletsRes] = await Promise.all([
+            const [loansRes, walletsRes, txRes] = await Promise.all([
                 LoanService.getContracts(),
-                WalletService.getAll()
+                WalletService.getAll(),
+                TransactionService.getAll()
             ]);
             
             const loansData = loansRes.data;
             setContracts(loansData);
             setWallets(walletsRes.data);
+            setAllTransactions(txRes.data);
             if (walletsRes.data.length > 0) {
                 setSelectedWalletId(walletsRes.data[0].id);
             }
@@ -80,27 +82,8 @@ export default function LoansScreen() {
         setRefreshing(false);
     };
 
-    const handleCreateLoan = async () => {
-        if (!partyName || !principal || !interestRate) return;
-        try {
-            await LoanService.createContract({
-                partyName: partyName,
-                partyPhone: partyPhone,
-                totalPrincipal: parseFloat(principal),
-                interestRate: parseFloat(interestRate),
-                role: loanType === 'Money Given' ? 'Lender' : 'Borrower',
-                totalInstallments: 0, 
-                startDate: new Date().toISOString().split('T')[0]
-            });
-            setSheetVisible(false);
-            setPartyName('');
-            setPartyPhone('');
-            setPrincipal('');
-            setInterestRate('');
-            fetchData();
-        } catch (err) {
-            Alert.alert("Error", "Failed to create loan");
-        }
+    const openCreateLoan = () => {
+        navigation.navigate('AddLoan', { refreshCallback: fetchData });
     };
 
     const handleViewEMIs = async (contract: any) => {
@@ -108,6 +91,10 @@ export default function LoansScreen() {
         try {
             const res = await LoanService.getInstallments(contract.id);
             setContractEMIs(res.data);
+            
+            const history = allTransactions.filter((tx: any) => tx.notes && tx.notes.includes(`Contract #${contract.id.substring(0,8)}`));
+            setContractPaymentHistory(history);
+            
             setIsViewEMIsVisible(true);
         } catch (err) {
             Alert.alert("Error", "Could not fetch EMIs");
@@ -166,6 +153,26 @@ export default function LoansScreen() {
             await Sharing.shareAsync(uri);
         } catch (err) {
             Alert.alert("Error", "Failed to generate PDF");
+        }
+    };
+
+    const handleSaveEMI = async () => {
+        if (!newEmiDate || !newEmiAmount) {
+            Alert.alert("Error", "Please fill all fields");
+            return;
+        }
+        try {
+            await LoanService.addInstallment(selectedContract.id, {
+                dueDate: newEmiDate,
+                emiAmount: parseFloat(newEmiAmount)
+            });
+            setIsAddEMIVisible(false);
+            setNewEmiDate('');
+            setNewEmiAmount('');
+            await fetchData();
+            handleViewEMIs(selectedContract);
+        } catch (err: any) {
+            Alert.alert("Error", err.response?.data?.message || "Failed to add EMI");
         }
     };
 
@@ -305,7 +312,7 @@ export default function LoansScreen() {
                             <Text style={activeTab === 'Pending EMI' ? styles.tabTextActive : styles.tabText}>Pending EMI</Text>
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.createBtn} onPress={() => setSheetVisible(true)}>
+                    <TouchableOpacity style={styles.createBtn} onPress={openCreateLoan}>
                         <Plus color="#000" size={20} />
                     </TouchableOpacity>
                 </View>
@@ -313,94 +320,6 @@ export default function LoansScreen() {
                 {activeTab === 'Active Contracts' ? renderActiveContracts() : renderPendingEMIs()}
             </ScrollView>
 
-            {/* Create Contract Sheet */}
-            <CustomBottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} height={680}>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-                    <View style={styles.sheetHeader}>
-                        <Text style={styles.sheetTitle}>New Contract</Text>
-                        <TouchableOpacity onPress={() => setSheetVisible(false)}>
-                            <X color={Colors.textSecondary} size={24} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.inputLabel}>Party Name</Text>
-                    <TextInput 
-                        style={styles.input} 
-                        placeholder="e.g. Rahul, Bank" 
-                        placeholderTextColor={Colors.textSecondary}
-                        value={partyName}
-                        onChangeText={setPartyName}
-                    />
-
-                    <Text style={styles.inputLabel}>Party Phone (WhatsApp)</Text>
-                    <TextInput 
-                        style={styles.input} 
-                        keyboardType="phone-pad"
-                        placeholder="e.g. 919876543210" 
-                        placeholderTextColor={Colors.textSecondary}
-                        value={partyPhone}
-                        onChangeText={setPartyPhone}
-                    />
-
-                    <Text style={styles.inputLabel}>Principal Amount (₹)</Text>
-                    <TextInput 
-                        style={styles.input} 
-                        keyboardType="numeric" 
-                        placeholder="0.00" 
-                        placeholderTextColor={Colors.textSecondary}
-                        value={principal}
-                        onChangeText={setPrincipal}
-                    />
-
-                    <Text style={styles.inputLabel}>Interest Rate (%)</Text>
-                    <TextInput 
-                        style={styles.input} 
-                        keyboardType="numeric" 
-                        placeholder="e.g. 5" 
-                        placeholderTextColor={Colors.textSecondary}
-                        value={interestRate}
-                        onChangeText={setInterestRate}
-                    />
-
-                    <View style={{ flexDirection: 'row', gap: 16 }}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.inputLabel}>Type</Text>
-                            <View style={styles.typeSelectorRow}>
-                                {['Given', 'Taken'].map(t => {
-                                    const fullType = `Money ${t}`;
-                                    return (
-                                        <TouchableOpacity 
-                                            key={t}
-                                            style={[styles.typeBtn, loanType === fullType && { backgroundColor: Colors.primary }]} 
-                                            onPress={() => setLoanType(fullType)}
-                                        >
-                                            <Text style={[styles.typeBtnText, loanType === fullType && { color: '#000' }]}>{t}</Text>
-                                        </TouchableOpacity>
-                                    )
-                                })}
-                            </View>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.inputLabel}>Interest</Text>
-                            <View style={styles.typeSelectorRow}>
-                                {['Simple', 'Compound'].map(t => (
-                                    <TouchableOpacity 
-                                        key={t}
-                                        style={[styles.typeBtn, interestType === t && { backgroundColor: Colors.primary }]} 
-                                        onPress={() => setInterestType(t)}
-                                    >
-                                        <Text style={[styles.typeBtnText, interestType === t && { color: '#000' }]}>{t}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity style={styles.submitBtn} onPress={handleCreateLoan}>
-                        <Text style={styles.submitBtnText}>Create Contract</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </CustomBottomSheet>
 
             {/* View EMIs Sheet */}
             <CustomBottomSheet visible={isViewEMIsVisible} onClose={() => setIsViewEMIsVisible(false)} height={600}>
@@ -409,11 +328,17 @@ export default function LoansScreen() {
                         <Text style={styles.sheetTitle}>EMIs</Text>
                         <Text style={{color: Colors.textSecondary, fontSize: 12, fontWeight: 'bold'}}>{selectedContract?.party_name}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setIsViewEMIsVisible(false)}>
-                        <X color={Colors.textSecondary} size={24} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                        <TouchableOpacity style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={() => setIsAddEMIVisible(true)}>
+                            <Text style={{ color: Colors.primary, fontWeight: 'bold', fontSize: 12 }}>+ Add EMI</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setIsViewEMIsVisible(false)}>
+                            <X color={Colors.textSecondary} size={24} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 <ScrollView showsVerticalScrollIndicator={false}>
+                    <Text style={{ color: Colors.textPrimary, fontSize: 16, fontWeight: '900', marginBottom: 16 }}>Installments</Text>
                     {contractEMIs.length === 0 ? (
                         <Text style={{color: Colors.textSecondary, textAlign: 'center', marginTop: 40}}>No installments found.</Text>
                     ) : (
@@ -442,7 +367,64 @@ export default function LoansScreen() {
                             </View>
                         ))
                     )}
+
+                    <View style={{ marginTop: 24, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)', paddingTop: 24, paddingBottom: 40 }}>
+                        <Text style={{ color: Colors.textPrimary, fontSize: 16, fontWeight: '900', marginBottom: 16 }}>Payment History</Text>
+                        {contractPaymentHistory.length === 0 ? (
+                            <Text style={{color: Colors.textSecondary, textAlign: 'center'}}>No payment history found.</Text>
+                        ) : (
+                            contractPaymentHistory.map((tx: any) => {
+                                const walletName = wallets.find(w => w.id === tx.wallet_id)?.name || 'Unknown';
+                                const isIncome = tx.type === 'Income';
+                                return (
+                                    <View key={tx.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: 16, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                                        <View style={{ flex: 1, paddingRight: 12 }}>
+                                            <Text style={{ color: Colors.textPrimary, fontWeight: 'bold', fontSize: 14, marginBottom: 4 }}>{tx.notes}</Text>
+                                            <Text style={{ color: Colors.textSecondary, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' }}>{new Date(tx.transaction_date).toLocaleDateString()} • {walletName}</Text>
+                                        </View>
+                                        <Text style={{ color: isIncome ? Colors.warning : Colors.textPrimary, fontSize: 16, fontWeight: '900' }}>
+                                            {isIncome ? '+' : '-'}₹{parseFloat(tx.amount).toLocaleString()}
+                                        </Text>
+                                    </View>
+                                )
+                            })
+                        )}
+                    </View>
                 </ScrollView>
+            </CustomBottomSheet>
+
+            {/* Add EMI Sheet */}
+            <CustomBottomSheet visible={isAddEMIVisible} onClose={() => setIsAddEMIVisible(false)} height={400}>
+                <View style={styles.sheetHeader}>
+                    <Text style={styles.sheetTitle}>New Custom EMI</Text>
+                    <TouchableOpacity onPress={() => setIsAddEMIVisible(false)}>
+                        <X color={Colors.textSecondary} size={24} />
+                    </TouchableOpacity>
+                </View>
+                <View style={{ marginTop: 16 }}>
+                    <Text style={{ color: Colors.textSecondary, marginBottom: 8, fontWeight: 'bold' }}>Due Date (YYYY-MM-DD)</Text>
+                    <TextInput
+                        style={[styles.input, { marginBottom: 16 }]}
+                        placeholder="2026-12-31"
+                        placeholderTextColor={Colors.textSecondary}
+                        value={newEmiDate}
+                        onChangeText={setNewEmiDate}
+                    />
+                    
+                    <Text style={{ color: Colors.textSecondary, marginBottom: 8, fontWeight: 'bold' }}>EMI Amount</Text>
+                    <TextInput
+                        style={[styles.input, { marginBottom: 24 }]}
+                        placeholder="e.g. 5000"
+                        placeholderTextColor={Colors.textSecondary}
+                        keyboardType="numeric"
+                        value={newEmiAmount}
+                        onChangeText={setNewEmiAmount}
+                    />
+
+                    <TouchableOpacity style={styles.submitBtn} onPress={handleSaveEMI}>
+                        <Text style={styles.submitBtnText}>Save EMI</Text>
+                    </TouchableOpacity>
+                </View>
             </CustomBottomSheet>
 
         </View>

@@ -23,16 +23,17 @@ export default function LoanPaymentScreen({ route, navigation }: any) {
         
         setIsPaying(true);
         try {
-            await LoanService.payEmi(contract.id, emi.id, selectedWalletId, parseFloat(payAmount));
+            await LoanService.payInstallment(emi.id, parseFloat(payAmount), selectedWalletId);
             if (refreshCallback) {
                 refreshCallback();
             }
             Alert.alert('Success', `${title} successful!`, [
                 { text: 'OK', onPress: () => navigation.goBack() }
             ]);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            Alert.alert('Error', 'Failed to process payment.');
+            const msg = error.response?.data?.message || error.message || 'Failed to process payment.';
+            Alert.alert('Error', msg);
         } finally {
             setIsPaying(false);
         }

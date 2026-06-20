@@ -20,19 +20,7 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Expenses');
 
-    // Bottom Sheet states
-    const [isAddMemberVisible, setAddMemberVisible] = useState(false);
-    const [newMemberEmail, setNewMemberEmail] = useState('');
-
-    const [isAddExpenseVisible, setAddExpenseVisible] = useState(false);
-    const [expDesc, setExpDesc] = useState('');
-    const [expAmt, setExpAmt] = useState('');
-    const [isEqualSplit, setIsEqualSplit] = useState(true);
-    const [customSplits, setCustomSplits] = useState<{ [key: number]: string }>({});
-
-    // UPI Sheet states
-    const [isUpiSheetVisible, setUpiSheetVisible] = useState(false);
-    const [selectedSettlement, setSelectedSettlement] = useState<any>(null);
+    // Bottom sheets replaced by full-page screens
 
     const fetchData = async () => {
         try {
@@ -56,121 +44,20 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
         fetchData();
     }, [groupId]);
 
-    const handleAddMember = async () => {
-        if (!newMemberEmail) return;
-        try {
-            await GroupService.addMember(groupId, newMemberEmail);
-            setAddMemberVisible(false);
-            setNewMemberEmail('');
-            fetchData();
-        } catch (error: any) {
-            Alert.alert("Error", error.response?.data?.message || "Could not add member");
-        }
+    const openAddMember = () => {
+        navigation.navigate('AddGroupMember', { groupId, refreshCallback: fetchData });
     };
 
-    const handleAddExpense = async () => {
-        if (!expDesc || !expAmt) return;
-        const totalAmount = parseFloat(expAmt);
-        if (isNaN(totalAmount) || totalAmount <= 0) return;
-
-        let splits = [];
-        if (isEqualSplit) {
-            const splitAmt = (totalAmount / members.length).toFixed(2);
-            splits = members.map(m => ({ user_id: m.id, amount_owed: splitAmt }));
-        } else {
-            let sum = 0;
-            splits = members.map(m => {
-                const amt = parseFloat(customSplits[m.id] || '0');
-                sum += amt;
-                return { user_id: m.id, amount_owed: amt };
-            });
-            if (Math.abs(sum - totalAmount) > 0.01) {
-                Alert.alert("Error", "Custom splits must equal total amount");
-                return;
-            }
-        }
-
-        try {
-            await GroupService.addExpense(groupId, {
-                description: expDesc,
-                amount: totalAmount,
-                paid_by: user.id, // currently logged in user pays
-                splits
-            });
-            setAddExpenseVisible(false);
-            setExpDesc('');
-            setExpAmt('');
-            setCustomSplits({});
-            fetchData();
-        } catch (error) {
-            Alert.alert("Error", "Could not add expense");
-        }
+    const openAddExpense = () => {
+        navigation.navigate('AddGroupExpense', { groupId, members, refreshCallback: fetchData });
     };
 
-    const handleSettle = (settlement: any) => {
+    const openSettleUp = (settlement: any) => {
         if (!settlement.to_upi_id) {
             Alert.alert("Missing UPI ID", `${settlement.to_name} has not set up their UPI ID yet.`);
-            return;
+            // Allow manual settle even without UPI
         }
-        setSelectedSettlement(settlement);
-        setUpiSheetVisible(true);
-    };
-
-    const handleUpiPayment = async (app: string) => {
-        if (!selectedSettlement) return;
-        
-        const { amount, to_name, to_upi_id, from, to } = selectedSettlement;
-        const note = encodeURIComponent(`Settlement for ${group.name}`);
-        const payeeName = encodeURIComponent(to_name);
-        
-        // Base UPI URL
-        let url = `upi://pay?pa=${to_upi_id}&pn=${payeeName}&am=${amount}&cu=INR&tn=${note}`;
-        
-        if (app === 'gpay') url = `tez://upi/pay?pa=${to_upi_id}&pn=${payeeName}&am=${amount}&cu=INR&tn=${note}`;
-        if (app === 'phonepe') url = `phonepe://upi/pay?pa=${to_upi_id}&pn=${payeeName}&am=${amount}&cu=INR&tn=${note}`;
-        if (app === 'paytm') url = `paytmmp://upi/pay?pa=${to_upi_id}&pn=${payeeName}&am=${amount}&cu=INR&tn=${note}`;
-
-        try {
-            const canOpen = await Linking.canOpenURL(url);
-            if (canOpen || app === 'other') {
-                await Linking.openURL(url);
-                // Assume payment initiated, ask user to confirm
-                setTimeout(() => {
-                    Alert.alert(
-                        "Confirm Payment",
-                        `Did you successfully pay ₹${amount} to ${to_name}?`,
-                        [
-                            { text: "No", style: "cancel" },
-                            {
-                                text: "Yes, Record It",
-                                onPress: async () => {
-                                    try {
-                                        await GroupService.settleDebt(groupId, {
-                                            paid_by: from,
-                                            paid_to: to,
-                                            amount: amount
-                                        });
-                                        setUpiSheetVisible(false);
-                                        fetchData();
-                                    } catch (error) {
-                                        Alert.alert("Error", "Could not record settlement");
-                                    }
-                                }
-                            }
-                        ]
-                    );
-                }, 1500);
-            } else {
-                Alert.alert("App not found", "The selected UPI app is not installed on your device.");
-            }
-        } catch (err) {
-            // Fallback for Expo/Android 11 where canOpenURL fails due to intent filters
-            try {
-                await Linking.openURL(url);
-            } catch (fallbackErr) {
-                Alert.alert("Error", "Could not open the selected UPI app.");
-            }
-        }
+        navigation.navigate('GroupSettleUp', { groupId, settlement, groupName: group?.name, refreshCallback: fetchData });
     };
 
     if (loading || !group) {
@@ -192,7 +79,7 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
                     </View>
                     <Text style={styles.membersCount}>{members.length} Members</Text>
                 </View>
-                <TouchableOpacity style={styles.addMemberBtnTop} onPress={() => setAddMemberVisible(true)}>
+                <TouchableOpacity style={styles.addMemberBtnTop} onPress={openAddMember}>
                     <UserPlus color={Colors.primary} size={16} />
                     <Text style={styles.addMemberTextTop}>Add</Text>
                 </TouchableOpacity>
@@ -226,7 +113,7 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
                         )}
                         ListEmptyComponent={<Text style={styles.emptyText}>No expenses yet.</Text>}
                     />
-                    <TouchableOpacity style={styles.fab} onPress={() => setAddExpenseVisible(true)}>
+                    <TouchableOpacity style={styles.fab} onPress={openAddExpense}>
                         <Plus color={Colors.white} size={28} />
                     </TouchableOpacity>
                 </View>
@@ -245,7 +132,7 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
                                         </Text>
                                         <Text style={styles.settleAmount}>₹{s.amount}</Text>
                                     </View>
-                                    <TouchableOpacity style={styles.settleBtn} onPress={() => handleSettle(s)}>
+                                    <TouchableOpacity style={styles.settleBtn} onPress={() => openSettleUp(s)}>
                                         <CreditCard color={Colors.white} size={16} />
                                         <Text style={styles.settleBtnText}>Settle Up</Text>
                                     </TouchableOpacity>
@@ -256,96 +143,7 @@ export default function GroupDetailsScreen({ route, navigation }: any) {
                 </ScrollView>
             )}
 
-            {/* Add Member Sheet */}
-            <CustomBottomSheet visible={isAddMemberVisible} onClose={() => setAddMemberVisible(false)} height={300}>
-                <Text style={styles.sheetTitle}>Add Member by Email</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="user@example.com"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={newMemberEmail}
-                    onChangeText={setNewMemberEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-                <TouchableOpacity style={styles.saveBtn} onPress={handleAddMember}>
-                    <Text style={styles.saveBtnText}>Add</Text>
-                </TouchableOpacity>
-            </CustomBottomSheet>
-
-            {/* Add Expense Sheet */}
-            <CustomBottomSheet visible={isAddExpenseVisible} onClose={() => setAddExpenseVisible(false)} height={500}>
-                <Text style={styles.sheetTitle}>Add Expense</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Description (e.g. Dinner)"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={expDesc}
-                    onChangeText={setExpDesc}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Total Amount"
-                    placeholderTextColor={Colors.textSecondary}
-                    value={expAmt}
-                    onChangeText={setExpAmt}
-                    keyboardType="numeric"
-                />
-                
-                <View style={styles.splitToggleContainer}>
-                    <TouchableOpacity style={[styles.splitToggle, isEqualSplit && styles.splitToggleActive]} onPress={() => setIsEqualSplit(true)}>
-                        <Text style={[styles.splitToggleText, isEqualSplit && styles.splitToggleTextActive]}>Equal Split</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.splitToggle, !isEqualSplit && styles.splitToggleActive]} onPress={() => setIsEqualSplit(false)}>
-                        <Text style={[styles.splitToggleText, !isEqualSplit && styles.splitToggleTextActive]}>Unequal Split</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {!isEqualSplit && (
-                    <ScrollView style={{ maxHeight: 150, marginBottom: 16 }}>
-                        {members.map(m => (
-                            <View key={m.id} style={styles.customSplitRow}>
-                                <Text style={styles.customSplitName}>{m.full_name}</Text>
-                                <TextInput
-                                    style={styles.customSplitInput}
-                                    placeholder="0"
-                                    placeholderTextColor={Colors.textSecondary}
-                                    keyboardType="numeric"
-                                    value={customSplits[m.id] || ''}
-                                    onChangeText={(val) => setCustomSplits({ ...customSplits, [m.id]: val })}
-                                />
-                            </View>
-                        ))}
-                    </ScrollView>
-                )}
-
-                <TouchableOpacity style={styles.saveBtn} onPress={handleAddExpense}>
-                    <Text style={styles.saveBtnText}>Add Expense</Text>
-                </TouchableOpacity>
-            </CustomBottomSheet>
-
-            {/* UPI Selection Sheet */}
-            <CustomBottomSheet visible={isUpiSheetVisible} onClose={() => setUpiSheetVisible(false)} height={400}>
-                <Text style={styles.sheetTitle}>Pay via UPI</Text>
-                {selectedSettlement && (
-                    <Text style={{ color: Colors.textSecondary, marginBottom: 20 }}>
-                        Paying <Text style={{color: Colors.textPrimary, fontWeight: 'bold'}}>₹{selectedSettlement.amount}</Text> to <Text style={{color: Colors.textPrimary, fontWeight: 'bold'}}>{selectedSettlement.to_name}</Text>
-                    </Text>
-                )}
-                
-                <TouchableOpacity style={styles.upiBtn} onPress={() => handleUpiPayment('gpay')}>
-                    <Text style={styles.upiBtnText}>Google Pay</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.upiBtn} onPress={() => handleUpiPayment('phonepe')}>
-                    <Text style={styles.upiBtnText}>PhonePe</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.upiBtn} onPress={() => handleUpiPayment('paytm')}>
-                    <Text style={styles.upiBtnText}>Paytm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.upiBtn, { borderBottomWidth: 0 }]} onPress={() => handleUpiPayment('other')}>
-                    <Text style={styles.upiBtnText}>Other UPI Apps</Text>
-                </TouchableOpacity>
-            </CustomBottomSheet>
+            {/* Replaced bottom sheets with AddGroupExpense, AddGroupMember, and GroupSettleUp screens */}
         </View>
     );
 }

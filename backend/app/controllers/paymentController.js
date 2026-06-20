@@ -44,7 +44,7 @@ exports.createOrder = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
-    res.status(500).json({ error: 'Could not create order', details: error.message });
+    res.status(500).json({ error: 'Could not create order. Please try again later.' });
   }
 };
 
@@ -107,6 +107,6 @@ exports.verifyPayment = async (req, res) => {
 
   } catch (error) {
     console.error('Error verifying payment:', error);
-    res.status(500).json({ error: 'Payment verification error', details: error.message });
+    res.status(500).json({ error: 'Payment verification error. Our team has been notified.' });
   }
 };

@@ -101,7 +101,7 @@ const Settings: React.FC = () => {
     const getProfilePic = () => {
         if (!profile?.profile_pic) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=2563eb&color=fff&size=256&font-size=0.4&bold=true`;
         if (profile.profile_pic.startsWith('http')) return profile.profile_pic;
-        return `http://localhost:5010${profile.profile_pic}`;
+        return `http://72.60.222.102:5010${profile.profile_pic}`;
     };
 
     return (
