@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { FinanceService, WalletService, AutomationService, UserService } from '../api/shared/apiService';
 import { formatCurrency, exportToCSV, exportToExcel, exportToPDF } from '../api/shared/utils';
 import { 
-    ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Check, Shield, Trash2, Repeat, Calendar, Download, Filter, Zap, Camera, Loader2
+    ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Check, Shield, Trash2, Repeat, Calendar, Download, Zap, Camera, Loader2
 } from 'lucide-react';
 
 const Transactions: React.FC = () => {
@@ -295,7 +295,7 @@ const Transactions: React.FC = () => {
                                             <button 
                                                 onClick={() => {
                                                     setEditingTx(tx);
-                                                    setTxForm({ walletId: tx.wallet_id.toString(), amount: tx.amount, type: tx.type, category: tx.category, notes: tx.notes || '' });
+                                                    setTxForm({ walletId: tx.wallet_id.toString(), amount: tx.amount, type: tx.type, category: tx.category, notes: tx.notes || '', transaction_date: tx.transaction_date || new Date().toISOString().split('T')[0] });
                                                     setIsAddTxOpen(true);
                                                 }}
                                                 className="p-2 text-slate-500 hover:text-blue-400 bg-slate-950 rounded-xl transition-all"

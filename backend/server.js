@@ -38,8 +38,12 @@ const userController = require('./app/controllers/userController');
 const authMiddleware = require('./app/middleware/authMiddleware');
 const adminMiddleware = require('./app/middleware/adminMiddleware');
 const uploadController = require('./app/controllers/uploadController');
+const cronService = require('./app/services/cronService');
 const multer = require('multer');
 const path = require('path');
+
+// Initialize background jobs
+cronService.initCronJobs();
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({

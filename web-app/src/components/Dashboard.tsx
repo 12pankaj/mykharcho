@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { 
     Wallet, 
     CreditCard, 
-    Plus,
     RefreshCw,
     ArrowUpRight,
     ArrowDownLeft,
@@ -66,7 +65,7 @@ const Dashboard: React.FC = () => {
 
     const pieData = Object.entries(expensesByCategory)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
+        .sort((a: any, b: any) => b.value - a.value);
 
     return (
         <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -270,14 +269,14 @@ const Dashboard: React.FC = () => {
                                             dataKey="value"
                                             stroke="none"
                                         >
-                                            {pieData.map((entry, index) => (
+                                            {pieData.map((_entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
                                         <Tooltip 
                                             contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '1rem', color: '#fff' }}
                                             itemStyle={{ fontWeight: 'bold' }}
-                                            formatter={(value: number) => `₹${value.toLocaleString()}`}
+                                            formatter={(value: any) => `₹${value.toLocaleString()}`}
                                         />
                                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                     </PieChart>

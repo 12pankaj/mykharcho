@@ -31,7 +31,8 @@ export default function ProfileScreen({ navigation }: any) {
         fullName: '',
         currency: 'INR',
         countryCode: 'IN',
-        upiId: ''
+        upiId: '',
+        monthly_budget: ''
     });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -44,7 +45,8 @@ export default function ProfileScreen({ navigation }: any) {
                     fullName: res.data.full_name || '',
                     currency: res.data.preferred_currency || 'INR',
                     countryCode: res.data.country_code || 'IN',
-                    upiId: res.data.upi_id || ''
+                    upiId: res.data.upi_id || '',
+                    monthly_budget: res.data.monthly_budget ? String(res.data.monthly_budget) : ''
                 });
             } catch (err) {
                 console.error('Failed to load profile');
@@ -318,6 +320,17 @@ export default function ProfileScreen({ navigation }: any) {
                             placeholder="e.g. name@okhdfcbank"
                             placeholderTextColor={Colors.textSecondary}
                             autoCapitalize="none"
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Monthly Budget (High Spending Alert)</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.monthly_budget}
+                            onChangeText={(text) => setFormData({...formData, monthly_budget: text})}
+                            placeholder="e.g. 50000"
+                            placeholderTextColor={Colors.textSecondary}
+                            keyboardType="numeric"
                         />
                     </View>
                     

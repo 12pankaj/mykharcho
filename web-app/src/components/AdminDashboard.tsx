@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Users, 
     CreditCard, 
     LifeBuoy, 
     CheckCircle2, 
@@ -8,28 +7,24 @@ import {
     AlertCircle,
     Settings,
     Search,
-    Filter,
     MessageSquare,
-    UserPlus,
-    MoreHorizontal,
     Send,
     ArrowLeft,
     Plus,
     X,
     Sparkles,
-    UserCheck,
     RefreshCcw
 } from 'lucide-react';
 import { AdminService, SupportService } from '../api/shared/apiService';
 import LiveChatAdmin from './LiveChatAdmin';
 
-const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' }> = ({ initialTab = 'tickets' }) => {
-    const [activeTab, setActiveTab] = useState<'tickets' | 'payments' | 'plans' | 'users' | 'live-chat'>(initialTab);
+const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts' }> = ({ initialTab = 'tickets' }) => {
+    const [activeTab, setActiveTab] = useState<'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts'>(initialTab);
     const [tickets, setTickets] = useState<any[]>([]);
     const [payments, setPayments] = useState<any[]>([]);
     const [agents, setAgents] = useState<any[]>([]);
     const [users, setUsers] = useState<any[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
+    
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const [reply, setReply] = useState('');
@@ -148,6 +143,12 @@ const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' |
                     icon={<MessageSquare size={20}/>}
                     label="Live Chat"
                 />
+                <TabButton 
+                    active={activeTab === 'broadcasts'} 
+                    onClick={() => setActiveTab('broadcasts')}
+                    icon={<AlertCircle size={20}/>}
+                    label="Broadcasts"
+                />
             </div>
 
             <div className="bg-slate-950/50 border border-slate-800 rounded-[2rem] overflow-hidden backdrop-blur-xl">
@@ -239,6 +240,9 @@ const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' |
                 )}
                 {activeTab === 'live-chat' && (
                     <LiveChatAdmin />
+                )}
+                {activeTab === 'broadcasts' && (
+                    <BroadcastManagement />
                 )}
             </div>
         </div>
@@ -616,6 +620,68 @@ const PlanManagement = () => {
                 <p className="text-xs text-slate-400 font-medium leading-relaxed">
                     Changes to plan prices will apply to new subscribers only. Existing active subscriptions will retain their original pricing until renewal.
                 </p>
+            </div>
+        </div>
+    );
+};
+
+const BroadcastManagement = () => {
+    const [title, setTitle] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleBroadcast = async () => {
+        if (!title.trim() || !message.trim()) return alert('Please fill in both title and message');
+        setLoading(true);
+        try {
+            await AdminService.broadcastNotification({ title, message });
+            alert('Broadcast sent successfully to all users!');
+            setTitle('');
+            setMessage('');
+        } catch (err) {
+            alert('Failed to send broadcast');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="p-10 space-y-8">
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                    <h3 className="text-xl font-black text-white">System Broadcasts</h3>
+                    <p className="text-slate-500 text-sm font-medium">Send real-time alerts or promotional messages to all users.</p>
+                </div>
+            </div>
+
+            <div className="bg-slate-950 border border-blue-500/30 rounded-[2rem] p-8 max-w-2xl">
+                <div className="space-y-6">
+                    <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Notification Title</label>
+                        <input 
+                            className="bg-slate-950 border border-slate-800 rounded-xl p-4 w-full text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/50"
+                            placeholder="e.g. Server Maintenance"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Notification Message</label>
+                        <textarea 
+                            className="bg-slate-950 border border-slate-800 rounded-xl p-4 w-full text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[120px]"
+                            placeholder="Enter the broadcast message here..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
+                    </div>
+                    <button 
+                        onClick={handleBroadcast} 
+                        disabled={loading}
+                        className="w-full flex justify-center items-center gap-2 py-4 bg-orange-700 text-white rounded-2xl font-black shadow-xl shadow-orange-600/20 hover:bg-orange-600 transition-all disabled:opacity-50"
+                    >
+                        {loading ? 'Sending...' : <><Send size={20}/> Send Broadcast</>}
+                    </button>
+                </div>
             </div>
         </div>
     );

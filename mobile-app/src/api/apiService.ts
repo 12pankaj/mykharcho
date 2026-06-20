@@ -137,6 +137,11 @@ export const AutomationService = {
     update: (id: string | number, data: any) => api.put(`/automation/${id}`, data),
 };
 
+export const NotificationService = {
+    getAll: () => api.get('/notifications'),
+    markAsRead: (id: string | number) => api.put(`/notifications/${id}/read`),
+};
+
 export const PaymentService = {
     createOrder: (planId: number) => api.post('/payments/create-order', { planId }),
     verifyPayment: (data: any) => api.post('/payments/verify', data),

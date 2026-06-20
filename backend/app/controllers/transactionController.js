@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const Notification = require('../models/notificationModel');
 
 exports.getTransactions = async (req, res) => {
     try {
@@ -40,6 +41,39 @@ exports.addTransaction = async (req, res) => {
         );
 
         await db.query('COMMIT');
+
+        // High Spending Alert Logic
+        if (type === 'Expense') {
+            try {
+                // Get user's monthly budget
+                const userRes = await db.query('SELECT monthly_budget FROM users WHERE id = $1', [req.user.id]);
+                const monthlyBudget = userRes.rows[0]?.monthly_budget;
+
+                if (monthlyBudget && monthlyBudget > 0) {
+                    // Calculate total expenses for current month
+                    const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+                    const expenseRes = await db.query(
+                        `SELECT SUM(amount) as total_expense 
+                         FROM transactions 
+                         WHERE user_id = $1 AND type = 'Expense' AND transaction_date >= $2`,
+                        [req.user.id, currentMonthStart]
+                    );
+                    
+                    const totalExpense = parseFloat(expenseRes.rows[0].total_expense || 0);
+                    const percentageUsed = (totalExpense / parseFloat(monthlyBudget)) * 100;
+
+                    // Trigger alert if >= 80% (only if we haven't already alerted for this transaction to avoid spam? For now, we alert)
+                    if (percentageUsed >= 80) {
+                        const title = percentageUsed >= 100 ? 'Budget Exceeded!' : 'High Spending Alert';
+                        const message = `You have spent ${percentageUsed.toFixed(1)}% of your monthly budget (₹${parseFloat(monthlyBudget).toLocaleString()}).`;
+                        await Notification.create(req.user.id, title, message, 'expense');
+                    }
+                }
+            } catch (alertErr) {
+                console.error('Failed to process spending alert:', alertErr);
+            }
+        }
+
         res.status(201).json(newTx.rows[0]);
     } catch (err) {
         await db.query('ROLLBACK');

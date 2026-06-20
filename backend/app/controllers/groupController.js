@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const Notification = require('../models/notificationModel');
 require('dotenv').config();
 
 const pool = new Pool({
@@ -124,6 +125,26 @@ exports.addExpense = async (req, res) => {
         }
 
         await pool.query('COMMIT');
+
+        // Notify other users in the split
+        try {
+            // Get group name and payer name for the notification message
+            const groupRes = await pool.query('SELECT name FROM groups WHERE id = $1', [id]);
+            const groupName = groupRes.rows[0]?.name || 'a group';
+            const payerRes = await pool.query('SELECT full_name FROM users WHERE id = $1', [req.user.id]);
+            const payerName = payerRes.rows[0]?.full_name || 'Someone';
+
+            for (let split of splits) {
+                if (split.user_id !== req.user.id && split.amount_owed > 0) {
+                    const title = `New Group Expense`;
+                    const message = `${payerName} added a new expense of ₹${amount} in ${groupName}. You owe ₹${split.amount_owed}.`;
+                    await Notification.create(split.user_id, title, message, 'group');
+                }
+            }
+        } catch (notifErr) {
+            console.error('Error sending group notifications:', notifErr);
+        }
+
         res.status(201).json({ success: true, message: 'Expense added successfully' });
     } catch (error) {
         await pool.query('ROLLBACK');

@@ -5,10 +5,7 @@ import {
     Plus, 
     MessageSquare, 
     Clock, 
-    CheckCircle, 
-    AlertCircle, 
     Send,
-    ChevronRight,
     Search,
     RefreshCcw,
     Sparkles,
@@ -17,7 +14,6 @@ import {
 
 const Support: React.FC = () => {
     const [tickets, setTickets] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
@@ -25,15 +21,13 @@ const Support: React.FC = () => {
     const [newTicket, setNewTicket] = useState({ subject: '', description: '', priority: 'Normal' });
 
     const fetchTickets = async () => {
-        setLoading(true);
         try {
             const res = await SupportService.getTickets();
             setTickets(res.data.tickets);
         } catch (err) {
             console.error('Error fetching tickets:', err);
         } finally {
-            setLoading(false);
-        }
+            }
     };
 
     const fetchMessages = async (ticketId: number) => {

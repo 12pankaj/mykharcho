@@ -1,55 +1,66 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, ArrowDownRight, ArrowUpRight, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import { NotificationService } from '../api/apiService';
 
-const DUMMY_NOTIFICATIONS = [
-    {
-        id: '1',
-        type: 'income',
-        title: 'Salary Credited',
-        message: '₹1,50,000 has been credited to your HDFC account.',
-        time: '2 mins ago',
-        isRead: false,
-    },
-    {
-        id: '2',
-        type: 'expense',
-        title: 'High Spending Alert',
-        message: 'You have spent 80% of your Food budget this month.',
-        time: '1 hour ago',
-        isRead: false,
-    },
-    {
-        id: '3',
-        type: 'group',
-        title: 'Goa Trip Settlement',
-        message: 'Rahul added a new expense of ₹4,500. You owe ₹1,500.',
-        time: '5 hours ago',
-        isRead: true,
-    },
-    {
-        id: '4',
-        type: 'loan',
-        title: 'EMI Due Tomorrow',
-        message: 'Your Car Loan EMI of ₹12,000 is due on 22nd June.',
-        time: '1 day ago',
-        isRead: true,
-    },
-    {
-        id: '5',
-        type: 'system',
-        title: 'System Update',
-        message: 'MyKharcho has been updated with new AI Insights.',
-        time: '2 days ago',
-        isRead: true,
-    }
-];
+// Format date helper
+const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} mins ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 30) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+};
 
 export default function NotificationsScreen({ navigation }: any) {
     const insets = useSafeAreaInsets();
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await NotificationService.getAll();
+            setNotifications(res.data.data || []);
+        } catch (err) {
+            console.error('Failed to fetch notifications:', err);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchNotifications();
+    };
+
+    const handleNotificationClick = async (notif: any) => {
+        if (!notif.is_read) {
+            try {
+                await NotificationService.markAsRead(notif.id);
+                // Optimistically update UI
+                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+            } catch (err) {
+                console.error('Failed to mark as read', err);
+            }
+        }
+    };
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -80,25 +91,38 @@ export default function NotificationsScreen({ navigation }: any) {
             <ScrollView 
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 60) }]}
                 showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
-                {DUMMY_NOTIFICATIONS.map((notif) => (
-                    <TouchableOpacity 
-                        key={notif.id} 
-                        style={[styles.notificationCard, !notif.isRead && styles.unreadCard]}
-                    >
-                        <View style={styles.leftContent}>
-                            <View style={[styles.iconWrapper, { backgroundColor: getIconBg(notif.type) }]}>
-                                {getIcon(notif.type)}
+                {loading ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                    </View>
+                ) : notifications.length === 0 ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+                        <Bell color={Colors.textMuted} size={48} style={{ marginBottom: 16 }} />
+                        <Text style={{ color: Colors.textSecondary, fontSize: 16 }}>No notifications yet</Text>
+                    </View>
+                ) : (
+                    notifications.map((notif) => (
+                        <TouchableOpacity 
+                            key={notif.id} 
+                            style={[styles.notificationCard, !notif.is_read && styles.unreadCard]}
+                            onPress={() => handleNotificationClick(notif)}
+                        >
+                            <View style={styles.leftContent}>
+                                <View style={[styles.iconWrapper, { backgroundColor: getIconBg(notif.type) }]}>
+                                    {getIcon(notif.type)}
+                                </View>
+                                <View style={styles.textContent}>
+                                    <Text style={[styles.title, !notif.is_read && styles.unreadText]}>{notif.title}</Text>
+                                    <Text style={styles.message} numberOfLines={2}>{notif.message}</Text>
+                                    <Text style={styles.time}>{formatTimeAgo(notif.created_at)}</Text>
+                                </View>
                             </View>
-                            <View style={styles.textContent}>
-                                <Text style={[styles.title, !notif.isRead && styles.unreadText]}>{notif.title}</Text>
-                                <Text style={styles.message} numberOfLines={2}>{notif.message}</Text>
-                                <Text style={styles.time}>{notif.time}</Text>
-                            </View>
-                        </View>
-                        {!notif.isRead && <View style={styles.unreadDot} />}
-                    </TouchableOpacity>
-                ))}
+                            {!notif.is_read && <View style={styles.unreadDot} />}
+                        </TouchableOpacity>
+                    ))
+                )}
             </ScrollView>
         </View>
     );

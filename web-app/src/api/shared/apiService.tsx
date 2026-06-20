@@ -95,6 +95,7 @@ export const AdminService = {
     assignTicket: (ticketId: number, agentId: number) => api.post('/admin/tickets/assign', { ticketId, agentId }),
     resolveTicket: (ticketId: number) => api.post('/admin/tickets/resolve', { ticketId }),
     updatePlan: (data: any) => api.put('/admin/plans', data),
+    broadcastNotification: (data: { title: string, message: string }) => api.post('/admin/notifications/broadcast', data),
 };
 
 export const GroupService = {

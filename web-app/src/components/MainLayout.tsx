@@ -26,7 +26,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [isSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
 

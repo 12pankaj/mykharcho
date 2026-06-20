@@ -4,11 +4,9 @@ import {
     LayoutDashboard, 
     CreditCard, 
     LifeBuoy, 
-    Settings as SettingsIcon,
     LogOut,
     Menu,
     X,
-    ShieldCheck,
     Users,
     Zap,
     ChevronRight

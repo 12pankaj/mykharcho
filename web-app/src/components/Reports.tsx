@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FinanceService, UserService } from '../api/shared/apiService';
-import { formatCurrency } from '../api/shared/utils';
 import { 
     PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area
@@ -11,19 +10,17 @@ const COLORS = ['#c1522d', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'
 
 const Reports: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
-    const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [profileRes, txRes, statsRes] = await Promise.all([
+            const [_profileRes, txRes, statsRes] = await Promise.all([
                 UserService.getProfile(),
                 FinanceService.getAll(),
                 FinanceService.getStats()
             ]);
-            setProfile(profileRes.data);
             setTransactions(txRes.data);
             setStats(statsRes.data);
         } catch (err) {
@@ -48,7 +45,7 @@ const Reports: React.FC = () => {
 
     const pieData = Object.entries(expensesByCategory)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value); // Sort descending
+        .sort((a: any, b: any) => b.value - a.value); // Sort descending
 
     // Aggregate data for Bar Chart (Income vs Expense by Month)
     // For simplicity, we just use the last 30 days chartData from stats, but we can map it to a bar chart
@@ -102,14 +99,14 @@ const Reports: React.FC = () => {
                                         dataKey="value"
                                         stroke="none"
                                     >
-                                        {pieData.map((entry, index) => (
+                                        {pieData.map((_entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <RechartsTooltip 
                                         contentStyle={{ backgroundColor: '#08172c', borderColor: '#344c77', borderRadius: '1rem', color: '#fff' }}
                                         itemStyle={{ fontWeight: 'bold' }}
-                                        formatter={(value: number) => `₹${value.toLocaleString()}`}
+                                        formatter={(value: any) => `₹${value.toLocaleString()}`}
                                     />
                                     <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                 </PieChart>
