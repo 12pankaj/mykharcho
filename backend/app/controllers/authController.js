@@ -1,0 +1,217 @@
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const generateToken = (userId, role) => {
+    return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
+};
+
+exports.signup = async (req, res) => {
+    const { fullName, email, password, currency, countryCode } = req.body;
+
+    try {
+        // Check if user exists
+        const userCheck = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create user
+        const newUserResult = await db.query(
+            'INSERT INTO users (full_name, email, password_hash, preferred_currency, country_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email',
+            [fullName, email, hashedPassword, currency || 'INR', countryCode || 'IN']
+        );
+        const newUser = newUserResult.rows[0];
+
+        // Create default wallet for the user
+        await db.query(
+            'INSERT INTO wallets (user_id, name, type, balance) VALUES ($1, $2, $3, $4)',
+            [newUser.id, 'Main Wallet', 'Cash', 0]
+        );
+
+        const token = generateToken(newUser.id, 'user');
+
+        res.status(201).json({
+            user: newUser,
+            token,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error during signup' });
+    }
+};
+
+exports.login = async (req, res) => {
+    const { email, password } = req.body;
+    console.log("email password", email, "  ", password);
+
+    try {
+        const userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        const user = userResult.rows[0];
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        const token = generateToken(user.id, user.role);
+
+        res.json({
+            user: {
+                id: user.id,
+                fullName: user.full_name,
+                email: user.email,
+                currency: user.preferred_currency,
+                countryCode: user.country_code,
+            },
+            token,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error during login' });
+    }
+};
+
+exports.googleAuth = async (req, res) => {
+    const { token } = req.body;
+    try {
+        let google_id, email, name, picture;
+
+        if (token.split('.').length === 3) {
+            // JWT ID Token handling
+            const ticket = await googleClient.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            google_id = payload.sub;
+            email = payload.email;
+            name = payload.name;
+            picture = payload.picture;
+        } else {
+            // Opaque Access Token handling (ya29...)
+            const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                throw new Error('Invalid access token');
+            }
+            const payload = await response.json();
+            google_id = payload.sub;
+            email = payload.email;
+            name = payload.name;
+            picture = payload.picture;
+        }
+
+        let userResult = await db.query('SELECT * FROM users WHERE email = $1 OR google_id = $2', [email, google_id]);
+
+        let user;
+        if (userResult.rows.length === 0) {
+            // Register new user via Google
+            const newUserResult = await db.query(
+                'INSERT INTO users (full_name, email, google_id, preferred_currency, country_code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+                [name, email, google_id, 'INR', 'IN']
+            );
+            user = newUserResult.rows[0];
+
+            // Create default wallet
+            await db.query(
+                'INSERT INTO wallets (user_id, name, type, balance) VALUES ($1, $2, $3, $4)',
+                [user.id, 'Main Wallet', 'Cash', 0]
+            );
+        } else {
+            user = userResult.rows[0];
+            if (!user.google_id) {
+                // Link Google ID if email matches but Google ID wasn't set
+                await db.query('UPDATE users SET google_id = $1 WHERE id = $2', [google_id, user.id]);
+            }
+        }
+
+        const jwtToken = generateToken(user.id, user.role || 'user');
+        res.json({
+            user: {
+                id: user.id,
+                fullName: user.full_name,
+                email: user.email,
+                currency: user.preferred_currency,
+                countryCode: user.country_code,
+            },
+            token: jwtToken,
+        });
+    } catch (err) {
+        console.error('Google Auth Error:', err);
+        res.status(500).json({ message: 'Google Authentication failed' });
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'User with that email does not exist.' });
+        }
+
+        const user = userResult.rows[0];
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+        // Token expires in 1 hour
+        const expires = new Date(Date.now() + 3600000);
+
+        await db.query(
+            'UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3',
+            [tokenHash, expires, user.id]
+        );
+
+        // In a real app, send this via email.
+        console.log(`[SIMULATED EMAIL] Password reset token for ${email}: ${resetToken}`);
+
+        res.json({ message: 'Password reset link sent to email' });
+    } catch (err) {
+        console.error('Forgot Password Error:', err);
+        res.status(500).json({ message: 'Error processing forgot password' });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+    try {
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+        const userResult = await db.query(
+            'SELECT * FROM users WHERE reset_password_token = $1 AND reset_password_expires > NOW()',
+            [tokenHash]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ message: 'Token is invalid or has expired.' });
+        }
+
+        const user = userResult.rows[0];
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await db.query(
+            'UPDATE users SET password_hash = $1, reset_password_token = NULL, reset_password_expires = NULL WHERE id = $2',
+            [hashedPassword, user.id]
+        );
+
+        res.json({ message: 'Password has been successfully reset.' });
+    } catch (err) {
+        console.error('Reset Password Error:', err);
+        res.status(500).json({ message: 'Error processing password reset' });
+    }
+};

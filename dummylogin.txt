@@ -1,0 +1,7 @@
+Admin Login:
+Email: admin@sparkpro.com
+Password: Admin@123
+
+User Login (If you haven't created one yet, please click "Sign Up" in the app using these details):
+Email: testuser@sparkpro.com
+Password: User@123
