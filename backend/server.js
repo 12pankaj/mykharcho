@@ -167,6 +167,12 @@ app.get('/api/public/plans', adminController.getPlans); // Public route for mark
 app.post('/api/admin/plans', authMiddleware, adminMiddleware, adminController.createPlan);
 app.put('/api/admin/plans', authMiddleware, adminMiddleware, adminController.updatePlan);
 
+// Notifications Routes
+const notificationController = require('./app/controllers/notificationController');
+app.get('/api/notifications', authMiddleware, notificationController.getNotifications);
+app.put('/api/notifications/:id/read', authMiddleware, notificationController.markAsRead);
+app.post('/api/admin/notifications/broadcast', authMiddleware, adminMiddleware, notificationController.broadcastNotification);
+
 // Initialize Cron Jobs
 require('./app/services/cronJob');
 

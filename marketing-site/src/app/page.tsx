@@ -239,7 +239,11 @@ export default async function Home() {
             </section>
 
             {/* Footer */}
-            <footer className="py-10 border-t border-slate-800 text-center text-slate-500 text-sm font-bold">
+            <footer className="py-10 border-t border-slate-800 text-center text-slate-500 text-sm font-bold flex flex-col items-center gap-4">
+                <div className="flex gap-6">
+                    <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                    <a href="mailto:support@mykharcho.in" className="hover:text-white transition-colors">Contact Support</a>
+                </div>
                 <p>&copy; {new Date().getFullYear()} MyKharcho. All rights reserved.</p>
             </footer>
 
