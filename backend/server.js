@@ -15,7 +15,7 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: false })); // SECURITY: Add security headers, allow cross origin resources for images
 
 // SECURITY: Restrict CORS
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8081', 'exp://localhost:8081', 'https://d7nql637-5010.inc1.devtunnels.ms/'];
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://app.mykharcho.in', 'http://127.0.0.1:5173', 'http://localhost:8081', 'exp://localhost:8081', 'https://d7nql637-5010.inc1.devtunnels.ms/'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {

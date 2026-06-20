@@ -33,7 +33,7 @@ export default async function Home() {
                     <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-300">
                         <Link href="#features" className="hover:text-white transition-colors">Features</Link>
                         <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className="px-6 py-2.5 bg-[#c1522d] text-white rounded-full hover:bg-orange-700 transition-all shadow-lg shadow-[#c1522d]/20">
+                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://app.mykharcho.in'}/login`} className="px-6 py-2.5 bg-[#c1522d] text-white rounded-full hover:bg-orange-700 transition-all shadow-lg shadow-[#c1522d]/20">
                             Dashboard Login
                         </Link>
                     </div>
@@ -54,7 +54,7 @@ export default async function Home() {
                         Track daily expenses, manage loans with friends, generate EMI statements, and automate your entire financial ecosystem in one beautiful app.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className="w-full sm:w-auto px-8 py-4 bg-[#c1522d] text-white rounded-full font-black text-lg hover:bg-orange-700 transition-all shadow-xl shadow-[#c1522d]/20 flex items-center justify-center gap-2">
+                        <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://app.mykharcho.in'}/login`} className="w-full sm:w-auto px-8 py-4 bg-[#c1522d] text-white rounded-full font-black text-lg hover:bg-orange-700 transition-all shadow-xl shadow-[#c1522d]/20 flex items-center justify-center gap-2">
                             Get Started Free <ChevronRight size={20} />
                         </Link>
                         <button className="w-full sm:w-auto px-8 py-4 bg-[#0c3468] text-white border border-[#344c77] rounded-full font-black text-lg hover:bg-[#344c77] transition-all">
@@ -186,7 +186,7 @@ export default async function Home() {
                                             </div>
                                         )}
                                     </div>
-                                    <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'http://localhost:5173'}/login`} className={`block text-center w-full py-4 rounded-2xl font-black transition-all ${isPro ? 'bg-white text-[#c1522d] hover:bg-slate-50' : 'bg-[#08172c] text-white hover:bg-[#061224] border border-[#344c77]'
+                                    <Link href={`${process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://app.mykharcho.in'}/login`} className={`block text-center w-full py-4 rounded-2xl font-black transition-all ${isPro ? 'bg-white text-[#c1522d] hover:bg-slate-50' : 'bg-[#08172c] text-white hover:bg-[#061224] border border-[#344c77]'
                                         }`}>
                                         Get Started
                                     </Link>
