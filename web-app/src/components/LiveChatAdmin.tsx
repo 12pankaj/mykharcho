@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { SupportService, SERVER_URL } from '../api/shared/apiService';
+import { SERVER_URL } from '../api/shared/apiService';
 import { Send, UserCircle, Clock, CheckCircle2, MessageSquare } from 'lucide-react';
 
 export default function LiveChatAdmin() {
