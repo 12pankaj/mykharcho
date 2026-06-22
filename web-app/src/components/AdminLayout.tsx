@@ -11,7 +11,7 @@ import {
     Zap,
     ChevronRight
 } from 'lucide-react';
-import { UserService } from '../api/shared/apiService';
+import { UserService, SERVER_URL } from '../api/shared/apiService';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -38,7 +38,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
 
     const getProfilePic = () => {
         if (profile?.profile_pic) {
-            return `http://72.60.222.102:5010${profile.profile_pic}`;
+            return `${SERVER_URL}${profile.profile_pic}`;
         }
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'Admin')}&background=0ea5e9&color=fff&bold=true`;
     };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, Shield, Zap, Crown, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PaymentService, UserService } from '../api/shared/apiService';
+import { PaymentService, UserService, PlanService } from '../api/shared/apiService';
 
 const Upgrade: React.FC = () => {
     const navigate = useNavigate();
@@ -17,10 +17,8 @@ const Upgrade: React.FC = () => {
                 setProfile(profileRes.data);
                 
                 // Fetch public plans to map by name instead of hardcoded ID
-                // Using axios directly or assuming api is available, actually we can just use the public endpoint directly
-                const plansRes = await fetch('http://72.60.222.102:5010/api/public/plans');
-                const plansData = await plansRes.json();
-                setPlans(plansData.plans || []);
+                const plansRes = await PlanService.getPublicPlans();
+                setPlans(plansRes.data.plans || []);
             } catch (err) {
                 console.error('Failed to fetch profile or plans', err);
             }

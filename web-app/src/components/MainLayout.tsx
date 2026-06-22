@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { UserService } from '../api/shared/apiService';
+import { UserService, SERVER_URL } from '../api/shared/apiService';
 import { 
     LayoutDashboard, 
     ArrowUpRight, 
@@ -54,7 +54,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
     const getProfilePic = () => {
         if (!profile?.profile_pic) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=2563eb&color=fff&size=256&font-size=0.4&bold=true`;
         if (profile.profile_pic.startsWith('http')) return profile.profile_pic;
-        return `http://72.60.222.102:5010${profile.profile_pic}`;
+        return `${SERVER_URL}${profile.profile_pic}`;
     };
 
     const navItems = [
@@ -89,7 +89,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                     )}
                 </div>
 
-                <nav className="flex-1 px-5 py-8 space-y-3">
+                <nav className="flex-1 px-5 py-8 space-y-3 overflow-y-auto custom-scrollbar">
                     {navItems.map((item) => (
                         <button 
                             key={item.path}

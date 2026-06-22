@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { SupportService, SERVER_URL } from '../api/shared/apiService';
 import { Send, UserCircle, Clock, CheckCircle2, MessageSquare } from 'lucide-react';
 
 export default function LiveChatAdmin() {
@@ -12,7 +13,7 @@ export default function LiveChatAdmin() {
 
     useEffect(() => {
         // Connect to Socket.io server
-        const newSocket = io('http://72.60.222.102:5010');
+        const newSocket = io(SERVER_URL);
         setSocket(newSocket);
 
         newSocket.on('connect', () => {

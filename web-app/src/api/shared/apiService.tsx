@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Base URL can be configured via environment variables in web projects
-const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'https://api.mykharcho.in/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'https://api.mykharcho.in/api';
+// Provide a URL without /api for sockets and images
+export const SERVER_URL = API_BASE_URL.replace('/api', '');
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -36,6 +38,10 @@ export const FinanceService = {
     update: (id: any, data: any) => api.put(`/transactions/${id}`, data),
     getStats: () => api.get('/stats'),
     parseAi: (data: any) => api.post('/ai/parse', data),
+};
+
+export const PlanService = {
+    getPublicPlans: () => api.get('/public/plans')
 };
 
 export const UserService = {
