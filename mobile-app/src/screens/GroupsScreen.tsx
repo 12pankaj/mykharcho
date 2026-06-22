@@ -82,7 +82,10 @@ export default function GroupsScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
-    listContent: { padding: 20, paddingBottom: 100 },
+    listContent: {
+        padding: 24,
+        paddingBottom: 120,
+    },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     emptyText: { color: Colors.textSecondary, fontSize: 16 },
     groupCard: {

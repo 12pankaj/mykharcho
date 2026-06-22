@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.background,
     },
     scrollContent: {
-        paddingHorizontal: 24,
-        paddingBottom: 40,
+        padding: 20,
+        paddingBottom: 120,
     },
     addWalletBtn: {
         flexDirection: 'row',

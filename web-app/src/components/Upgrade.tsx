@@ -138,7 +138,7 @@ const Upgrade: React.FC = () => {
                         <h3 className="text-xl font-black text-white mb-2">Basic</h3>
                         <p className="text-slate-500 text-sm font-bold">For personal tracking</p>
                         <div className="mt-6 flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-white">$0</span>
+                            <span className="text-4xl font-black text-white">₹{plans.find(p => p.name === 'Free')?.price || 0}</span>
                             <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">/ forever</span>
                         </div>
                     </div>
@@ -166,7 +166,7 @@ const Upgrade: React.FC = () => {
                         <h3 className="text-xl font-black text-white mb-2">Pro</h3>
                         <p className="text-blue-200/60 text-sm font-bold">For serious budgeters</p>
                         <div className="mt-6 flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-white">$9.99</span>
+                            <span className="text-4xl font-black text-white">₹{plans.find(p => p.name === 'Pro')?.price || 499}</span>
                             <span className="text-blue-200/60 font-bold uppercase tracking-widest text-xs">/ month</span>
                         </div>
                     </div>
@@ -196,7 +196,7 @@ const Upgrade: React.FC = () => {
                         </h3>
                         <p className="text-slate-500 text-sm font-bold">For businesses & whales</p>
                         <div className="mt-6 flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-white">$19.99</span>
+                            <span className="text-4xl font-black text-white">₹{plans.find(p => p.name === 'Elite')?.price || 999}</span>
                             <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">/ month</span>
                         </div>
                     </div>

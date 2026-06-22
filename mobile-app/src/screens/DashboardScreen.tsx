@@ -135,7 +135,7 @@ export default function DashboardScreen() {
                 </View>
             )}
             <ScrollView
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 40) }]}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 120, 120) }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
                 {/* Stat Cards Container */}

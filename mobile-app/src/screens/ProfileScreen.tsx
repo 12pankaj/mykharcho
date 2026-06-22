@@ -134,7 +134,7 @@ export default function ProfileScreen({ navigation }: any) {
     return (
         <View style={styles.container}>
             <Header title="Settings" subtitle="System Preferences" />
-            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 20, 60) }]}>
+            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 120, 120) }]}>
                 
                 {/* Advanced Profile Card */}
                 <GlassCard style={styles.profileCard} intensity="heavy">
