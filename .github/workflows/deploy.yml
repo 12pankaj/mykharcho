@@ -1,0 +1,119 @@
+name: Deploy MyKharcho
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy MyKharcho
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          password: ${{ secrets.DEV_PASSWORD }}
+          port: 22
+          command_timeout: 40m
+
+          script: |
+            set -e
+
+            cd /mykharcho
+
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+
+            echo "========== BACKEND =========="
+            cd backend
+            npm install
+            pm2 restart mykharcho-api || pm2 start server.js --name mykharcho-api
+
+            echo "========== MARKETING SITE =========="
+            cd ../marketing-site
+            npm install
+            npm run build
+            pm2 restart mykharcho-marketing || pm2 start npm --name mykharcho-marketing -- start
+
+            echo "========== WEB APP =========="
+            cd ../web-app
+            npm install
+            npm run build
+
+            echo "========== NGINX =========="
+            nginx -t
+            systemctl reload nginx
+
+            pm2 save
+
+      - name: WhatsApp Success Notification
+        if: success()
+        run: |
+          curl -X POST "https://graph.facebook.com/v25.0/475120179015740/messages" \
+          -H "Authorization: Bearer ${{ secrets.WHATSAPP_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "messaging_product": "whatsapp",
+            "to": "919057533807",
+            "type": "template",
+            "template": {
+              "name": "success_deployment",
+              "language": {
+                "code": "en"
+              },
+              "components": [
+                {
+                  "type": "body",
+                  "parameters": [
+                    {
+                      "type": "text",
+                      "text": "MyKharcho"
+                    },
+                    {
+                      "type": "text",
+                      "text": "main"
+                    }
+                  ]
+                }
+              ]
+            }
+          }'
+
+      - name: WhatsApp Error Notification
+        if: failure()
+        run: |
+          curl -X POST "https://graph.facebook.com/v25.0/475120179015740/messages" \
+          -H "Authorization: Bearer ${{ secrets.WHATSAPP_TOKEN }}" \
+          -H "Content-Type": "application/json" \
+          -d '{
+            "messaging_product": "whatsapp",
+            "to": "919057533807",
+            "type": "template",
+            "template": {
+              "name": "error_deployment_found",
+              "language": {
+                "code": "en"
+              },
+              "components": [
+                {
+                  "type": "body",
+                  "parameters": [
+                    {
+                      "type": "text",
+                      "text": "MyKharcho"
+                    },
+                    {
+                      "type": "text",
+                      "text": "main"
+                    }
+                  ]
+                }
+              ]
+            }
+          }'
