@@ -13,7 +13,8 @@ import {
     Plus,
     X,
     Sparkles,
-    RefreshCcw
+    RefreshCcw,
+    Zap
 } from 'lucide-react';
 import { AdminService, SupportService, PromotionService } from '../api/shared/apiService';
 import LiveChatAdmin from './LiveChatAdmin';
@@ -244,7 +245,7 @@ const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' |
                 {activeTab === 'payments' && (
                     <PaymentsTable payments={payments} loading={loading} />
                 )}
-                {activeTab === 'users' && <UserManagement users={users} />}
+                {activeTab === 'users' && <UsersTable users={users} loading={loading} />}
                 {activeTab === 'plans' && <PlanManagement />}
                 {activeTab === 'coupons' && <CouponManagement />}
                 {activeTab === 'promotions' && <PromotionManagement />}
@@ -506,7 +507,7 @@ const PlanManagement = () => {
         try {
             await AdminService.createPlan(newPlan);
             setShowCreate(false);
-            setNewPlan({ name: '', price_monthly: 0, max_wallets: 0, max_rules: 0 });
+            setNewPlan({ name: '', price_monthly: 0, price_yearly: 0, price_3_year: 0, max_wallets: 0, max_rules: 0 });
             fetchPlans();
         } catch (err) {
             alert('Failed to create plan');

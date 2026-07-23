@@ -88,7 +88,7 @@ export const AutomationService = {
 };
 
 export const PaymentService = {
-    createOrder: (planId: number) => api.post('/payments/create-order', { planId }),
+    createOrder: (planId: number | string, duration: string, couponCode: string) => api.post('/payments/create-order', { planId, duration, couponCode }),
     verifyPayment: (data: any) => api.post('/payments/verify', data),
 };
 
@@ -111,6 +111,9 @@ export const AdminService = {
     resolveTicket: (ticketId: number) => api.post('/admin/tickets/resolve', { ticketId }),
     updatePlan: (data: any) => api.put('/admin/plans', data),
     broadcastNotification: (data: { title: string, message: string }) => api.post('/admin/notifications/broadcast', data),
+    getCoupons: () => api.get('/admin/coupons'),
+    createCoupon: (data: any) => api.post('/admin/coupons', data),
+    deleteCoupon: (id: number) => api.delete(`/admin/coupons/${id}`),
 };
 
 export const GroupService = {
