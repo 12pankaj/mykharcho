@@ -77,7 +77,7 @@ export default function NotificationsScreen({ navigation }: any) {
         switch (type) {
             case 'income': return 'rgba(34, 197, 94, 0.1)';
             case 'expense': return 'rgba(239, 68, 68, 0.1)';
-            case 'group': return 'rgba(59, 130, 246, 0.1)';
+            case 'group': return 'rgba(245, 158, 11, 0.1)';
             case 'loan': return 'rgba(234, 179, 8, 0.1)';
             case 'system': return 'rgba(168, 85, 247, 0.1)';
             default: return 'rgba(255, 255, 255, 0.05)';
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
         borderColor: Colors.border,
     },
     unreadCard: {
-        backgroundColor: 'rgba(59, 130, 246, 0.05)',
-        borderColor: 'rgba(59, 130, 246, 0.2)',
+        backgroundColor: 'rgba(245, 158, 11, 0.05)',
+        borderColor: 'rgba(245, 158, 11, 0.2)',
     },
     leftContent: {
         flexDirection: 'row',

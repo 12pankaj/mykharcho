@@ -92,6 +92,11 @@ export const UserService = {
         return { data: await response.json() };
     },
     savePushToken: (pushToken: string) => api.post('/profile/push-token', { pushToken }),
+    claimTrial: () => api.post('/user/claim-trial'),
+};
+
+export const PromotionService = {
+    getActive: () => api.get('/promotions/active'),
 };
 
 export const WalletService = {

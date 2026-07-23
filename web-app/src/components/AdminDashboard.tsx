@@ -15,11 +15,11 @@ import {
     Sparkles,
     RefreshCcw
 } from 'lucide-react';
-import { AdminService, SupportService } from '../api/shared/apiService';
+import { AdminService, SupportService, PromotionService } from '../api/shared/apiService';
 import LiveChatAdmin from './LiveChatAdmin';
 
-const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts' }> = ({ initialTab = 'tickets' }) => {
-    const [activeTab, setActiveTab] = useState<'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts'>(initialTab);
+const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts' | 'coupons' | 'promotions' }> = ({ initialTab = 'tickets' }) => {
+    const [activeTab, setActiveTab] = useState<'tickets' | 'payments' | 'plans' | 'users' | 'live-chat' | 'broadcasts' | 'coupons' | 'promotions'>(initialTab);
     const [tickets, setTickets] = useState<any[]>([]);
     const [payments, setPayments] = useState<any[]>([]);
     const [agents, setAgents] = useState<any[]>([]);
@@ -149,6 +149,18 @@ const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' |
                     icon={<AlertCircle size={20}/>}
                     label="Broadcasts"
                 />
+                <TabButton 
+                    active={activeTab === 'coupons'} 
+                    onClick={() => setActiveTab('coupons')}
+                    icon={<CreditCard size={20}/>}
+                    label="Promo Codes"
+                />
+                <TabButton 
+                    active={activeTab === 'promotions'} 
+                    onClick={() => setActiveTab('promotions')}
+                    icon={<Zap size={20}/>}
+                    label="Flash Sales"
+                />
             </div>
 
             <div className="bg-slate-950/50 border border-slate-800 rounded-[2rem] overflow-hidden backdrop-blur-xl">
@@ -232,12 +244,10 @@ const AdminDashboard: React.FC<{ initialTab?: 'tickets' | 'payments' | 'plans' |
                 {activeTab === 'payments' && (
                     <PaymentsTable payments={payments} loading={loading} />
                 )}
-                {activeTab === 'plans' && (
-                    <PlanManagement />
-                )}
-                {activeTab === 'users' && (
-                    <UsersTable users={users} loading={loading} />
-                )}
+                {activeTab === 'users' && <UserManagement users={users} />}
+                {activeTab === 'plans' && <PlanManagement />}
+                {activeTab === 'coupons' && <CouponManagement />}
+                {activeTab === 'promotions' && <PromotionManagement />}
                 {activeTab === 'live-chat' && (
                     <LiveChatAdmin />
                 )}
@@ -468,9 +478,16 @@ const LoadingState = () => (
 );
 
 const PlanManagement = () => {
-    const [plans, setPlans] = useState<any[]>([]);
-    const [showCreate, setShowCreate] = useState(false);
-    const [newPlan, setNewPlan] = useState({ name: '', price_monthly: 0, max_wallets: 0, max_rules: 0 });
+    const [plans, setPlans] = React.useState<any[]>([]);
+    const [showCreate, setShowCreate] = React.useState(false);
+    const [newPlan, setNewPlan] = React.useState({
+        name: '',
+        price_monthly: 0,
+        price_yearly: 0,
+        price_3_year: 0,
+        max_wallets: 5,
+        max_rules: 5
+    });
 
     const fetchPlans = async () => {
         try {
@@ -538,12 +555,30 @@ const PlanManagement = () => {
                             />
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Price (₹)</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Price Monthly(₹)</label>
                             <input 
                                 type="number"
                                 className="bg-slate-950 border border-slate-800 rounded-xl p-4 w-full text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/50"
                                 value={newPlan.price_monthly}
                                 onChange={(e) => setNewPlan({...newPlan, price_monthly: parseInt(e.target.value)})}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Price Yearly(₹)</label>
+                            <input 
+                                type="number"
+                                className="bg-slate-950 border border-slate-800 rounded-xl p-4 w-full text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/50"
+                                value={newPlan.price_yearly}
+                                onChange={(e) => setNewPlan({...newPlan, price_yearly: parseInt(e.target.value)})}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Price 3 Years(₹)</label>
+                            <input 
+                                type="number"
+                                className="bg-slate-950 border border-slate-800 rounded-xl p-4 w-full text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/50"
+                                value={newPlan.price_3_year}
+                                onChange={(e) => setNewPlan({...newPlan, price_3_year: parseInt(e.target.value)})}
                             />
                         </div>
                         <div>
@@ -579,16 +614,42 @@ const PlanManagement = () => {
                             <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg">ID: {plan.id.substring(0,8)}</span>
                         </div>
                         <div className="space-y-6">
-                            <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Price (Monthly)</label>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-slate-400 font-bold">₹</span>
-                                    <input 
-                                        type="number" 
-                                        value={plan.price_monthly} 
-                                        onChange={(e) => handleUpdate(plan.id, 'price_monthly', parseInt(e.target.value))}
-                                        className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-full text-white font-black focus:ring-2 focus:ring-blue-500/50"
-                                    />
+                            <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">1 Month</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-slate-400 font-bold">₹</span>
+                                        <input 
+                                            type="number" 
+                                            value={plan.price_monthly} 
+                                            onChange={(e) => handleUpdate(plan.id, 'price_monthly', parseInt(e.target.value))}
+                                            className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-full text-white font-black focus:ring-2 focus:ring-blue-500/50"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">1 Year</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-slate-400 font-bold">₹</span>
+                                        <input 
+                                            type="number" 
+                                            value={plan.price_yearly || 0} 
+                                            onChange={(e) => handleUpdate(plan.id, 'price_yearly', parseInt(e.target.value))}
+                                            className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-full text-white font-black focus:ring-2 focus:ring-blue-500/50"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">3 Years</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-slate-400 font-bold">₹</span>
+                                        <input 
+                                            type="number" 
+                                            value={plan.price_3_year || 0} 
+                                            onChange={(e) => handleUpdate(plan.id, 'price_3_year', parseInt(e.target.value))}
+                                            className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-full text-white font-black focus:ring-2 focus:ring-blue-500/50"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -682,6 +743,212 @@ const BroadcastManagement = () => {
                         {loading ? 'Sending...' : <><Send size={20}/> Send Broadcast</>}
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+};
+
+const CouponManagement = () => {
+    const [coupons, setCoupons] = useState<any[]>([]);
+    const [showCreate, setShowCreate] = useState(false);
+    const [newCoupon, setNewCoupon] = useState({ code: '', discount_percentage: 0, discount_amount: 0, max_uses: 0, valid_until: '', applicable_plans: 'all' });
+
+    const fetchCoupons = async () => {
+        try {
+            const res = await AdminService.getCoupons();
+            setCoupons(res.data.coupons || []);
+        } catch (err) {
+            console.error('Failed to fetch coupons', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchCoupons();
+    }, []);
+
+    const handleCreate = async () => {
+        try {
+            await AdminService.createCoupon(newCoupon);
+            setShowCreate(false);
+            fetchCoupons();
+        } catch (err) {
+            alert('Failed to create coupon');
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if(!window.confirm('Are you sure you want to delete this coupon?')) return;
+        try {
+            await AdminService.deleteCoupon(id);
+            fetchCoupons();
+        } catch (err) {
+            alert('Failed to delete coupon');
+        }
+    };
+
+    return (
+        <div className="p-10 space-y-8">
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                    <h3 className="text-xl font-black text-white">Promo Codes & Offers</h3>
+                    <p className="text-slate-500 text-sm font-medium">Create and manage discount codes for checkout.</p>
+                </div>
+                <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black hover:bg-blue-500 transition-all">
+                    <Plus size={20}/> New Coupon
+                </button>
+            </div>
+
+            {showCreate && (
+                <div className="bg-slate-950 border border-blue-500/30 rounded-[2rem] p-8 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Code</label>
+                            <input className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.code} onChange={e => setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})} placeholder="e.g. DIWALI50"/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">% Discount</label>
+                            <input type="number" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.discount_percentage} onChange={e => setNewCoupon({...newCoupon, discount_percentage: parseInt(e.target.value)})}/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Flat Discount (₹)</label>
+                            <input type="number" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.discount_amount} onChange={e => setNewCoupon({...newCoupon, discount_amount: parseInt(e.target.value)})}/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Applicable Term</label>
+                            <select className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.applicable_plans} onChange={e => setNewCoupon({...newCoupon, applicable_plans: e.target.value})}>
+                                <option value="all">All Durations</option>
+                                <option value="monthly">Monthly Only</option>
+                                <option value="yearly">Yearly Only</option>
+                                <option value="3_year">3-Year Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Max Uses (0 = unlimited)</label>
+                            <input type="number" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.max_uses} onChange={e => setNewCoupon({...newCoupon, max_uses: parseInt(e.target.value)})}/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Valid Until</label>
+                            <input type="date" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newCoupon.valid_until} onChange={e => setNewCoupon({...newCoupon, valid_until: e.target.value})}/>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <button onClick={handleCreate} className="px-8 py-4 bg-orange-700 text-white rounded-xl font-black">Create Coupon</button>
+                        <button onClick={() => setShowCreate(false)} className="px-8 py-4 bg-slate-800 text-slate-300 rounded-xl font-black">Cancel</button>
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {coupons.map(coupon => (
+                    <div key={coupon.id} className="bg-slate-950 border border-slate-800 rounded-[2rem] p-6 relative">
+                        <button onClick={() => handleDelete(coupon.id)} className="absolute top-6 right-6 text-slate-600 hover:text-red-500"><X size={20}/></button>
+                        <div className="flex items-center gap-4 mb-4">
+                            <span className="px-4 py-2 bg-green-500/10 text-green-400 font-black tracking-widest border border-green-500/20 rounded-xl text-lg">{coupon.code}</span>
+                        </div>
+                        <div className="space-y-2 text-sm text-slate-400 font-bold">
+                            <p>Discount: {coupon.discount_percentage > 0 ? `${coupon.discount_percentage}% OFF` : `₹${coupon.discount_amount} OFF`}</p>
+                            <p>Applicable: {coupon.applicable_plans}</p>
+                            <p>Uses: {coupon.uses} / {coupon.max_uses === 0 ? '∞' : coupon.max_uses}</p>
+                            <p>Expires: {coupon.valid_until ? new Date(coupon.valid_until).toLocaleDateString() : 'Never'}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const PromotionManagement = () => {
+    const [promotions, setPromotions] = useState<any[]>([]);
+    const [showCreate, setShowCreate] = useState(false);
+    const [newPromo, setNewPromo] = useState({ title: '', discount_percentage: 0, end_date: '', is_active: true });
+
+    const fetchPromotions = async () => {
+        try {
+            const res = await PromotionService.getAll();
+            setPromotions(res.data.promotions || []);
+        } catch (err) {
+            console.error('Failed to fetch promotions', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchPromotions();
+    }, []);
+
+    const handleCreate = async () => {
+        if (!newPromo.title.trim() || !newPromo.end_date) {
+            return alert('Title and end date are required');
+        }
+        try {
+            await PromotionService.create(newPromo);
+            setShowCreate(false);
+            setNewPromo({ title: '', discount_percentage: 0, end_date: '', is_active: true });
+            fetchPromotions();
+        } catch (err) {
+            alert('Failed to create promotion');
+        }
+    };
+
+    const handleDelete = async (id: string | number) => {
+        if (!window.confirm('Are you sure you want to delete this promotion?')) return;
+        try {
+            await PromotionService.delete(id);
+            fetchPromotions();
+        } catch (err) {
+            alert('Failed to delete promotion');
+        }
+    };
+
+    return (
+        <div className="p-10 space-y-8 animate-in fade-in duration-300">
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                    <h3 className="text-xl font-black text-white">Flash Sales & Banners</h3>
+                    <p className="text-slate-500 text-sm font-medium">Create time-limited discounts and header alert banners.</p>
+                </div>
+                <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black hover:bg-blue-500 transition-all">
+                    <Plus size={20}/> New Promotion
+                </button>
+            </div>
+
+            {showCreate && (
+                <div className="bg-slate-950 border border-blue-500/30 rounded-[2rem] p-8 mb-8 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Banner Title</label>
+                            <input className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newPromo.title} onChange={e => setNewPromo({...newPromo, title: e.target.value})} placeholder="e.g. FATHER'S DAY FLASH SALE"/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">% Discount</label>
+                            <input type="number" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newPromo.discount_percentage} onChange={e => setNewPromo({...newPromo, discount_percentage: parseInt(e.target.value)})}/>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase block mb-2">Ends On</label>
+                            <input type="datetime-local" className="bg-slate-900 border border-slate-800 rounded-xl p-4 w-full text-white font-bold" value={newPromo.end_date} onChange={e => setNewPromo({...newPromo, end_date: e.target.value})}/>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <button onClick={handleCreate} className="px-8 py-4 bg-orange-700 text-white rounded-xl font-black">Create Promotion</button>
+                        <button onClick={() => setShowCreate(false)} className="px-8 py-4 bg-slate-800 text-slate-300 rounded-xl font-black">Cancel</button>
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {promotions.map(promo => (
+                    <div key={promo.id} className="bg-slate-950 border border-slate-800 rounded-[2rem] p-6 relative">
+                        <button onClick={() => handleDelete(promo.id)} className="absolute top-6 right-6 text-slate-600 hover:text-red-500"><X size={20}/></button>
+                        <div className="flex items-center gap-4 mb-4">
+                            <span className="px-4 py-2 bg-orange-500/10 text-orange-400 font-black tracking-widest border border-orange-500/20 rounded-xl text-base">{promo.title}</span>
+                        </div>
+                        <div className="space-y-2 text-sm text-slate-400 font-bold">
+                            <p>Discount: {promo.discount_percentage}% OFF</p>
+                            <p>Ends: {new Date(promo.end_date).toLocaleString()}</p>
+                            <p>Status: <span className={new Date(promo.end_date) > new Date() && promo.is_active ? 'text-green-500' : 'text-red-500'}>{new Date(promo.end_date) > new Date() && promo.is_active ? 'Active' : 'Expired'}</span></p>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

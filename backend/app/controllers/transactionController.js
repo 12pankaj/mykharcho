@@ -40,6 +40,64 @@ exports.addTransaction = async (req, res) => {
             [amount * multiplier, walletId, req.user.id]
         );
 
+        let trialUnlocked = false;
+        let finalStreak = 0;
+        if (type === 'Expense') {
+            const userRes = await db.query(
+                'SELECT current_streak, last_transaction_date, has_claimed_trial, current_plan_id FROM users WHERE id = $1',
+                [req.user.id]
+            );
+            if (userRes.rows.length > 0) {
+                const { current_streak, last_transaction_date, has_claimed_trial, current_plan_id } = userRes.rows[0];
+                
+                const formatDateLocal = (dateInput) => {
+                    if (typeof dateInput === 'string' && dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        return dateInput;
+                    }
+                    const d = new Date(dateInput);
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                const txDateStr = formatDateLocal(transaction_date || new Date());
+                
+                let newStreak = 1;
+                if (last_transaction_date) {
+                    const lastDateStr = formatDateLocal(last_transaction_date);
+                    const diffTime = new Date(txDateStr) - new Date(lastDateStr);
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        newStreak = (current_streak || 0) + 1;
+                    } else if (diffDays === 0) {
+                        newStreak = (current_streak || 0) || 1;
+                    } else if (diffDays < 0) {
+                        newStreak = (current_streak || 0) || 1;
+                    } else {
+                        newStreak = 1;
+                    }
+                }
+                
+                finalStreak = newStreak;
+                const freePlanId = '197f1815-141b-492f-bd2a-398ba6dc53d9';
+                if (newStreak >= 7 && !has_claimed_trial && current_plan_id === freePlanId) {
+                    trialUnlocked = true;
+                }
+                
+                await db.query(
+                    'UPDATE users SET current_streak = $1, last_transaction_date = $2 WHERE id = $3',
+                    [newStreak, txDateStr, req.user.id]
+                );
+            }
+        } else {
+            const userRes = await db.query('SELECT current_streak FROM users WHERE id = $1', [req.user.id]);
+            if (userRes.rows.length > 0) {
+                finalStreak = userRes.rows[0].current_streak || 0;
+            }
+        }
+
         await db.query('COMMIT');
 
         // High Spending Alert Logic
@@ -74,7 +132,11 @@ exports.addTransaction = async (req, res) => {
             }
         }
 
-        res.status(201).json(newTx.rows[0]);
+        res.status(201).json({
+            ...newTx.rows[0],
+            trialUnlocked,
+            currentStreak: finalStreak
+        });
     } catch (err) {
         await db.query('ROLLBACK');
         console.error(err);

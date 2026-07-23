@@ -34,6 +34,15 @@ function App() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     setIsAuthenticated(!!token);
     
@@ -259,6 +268,16 @@ function App() {
               isAuthenticated ? (
                 <AdminLayout onLogout={handleLogout}>
                   <AdminDashboard initialTab="plans" />
+                </AdminLayout>
+              ) : <Navigate to="/login" />
+            } 
+          />
+          <Route 
+            path="/admin/coupons" 
+            element={
+              isAuthenticated ? (
+                <AdminLayout onLogout={handleLogout}>
+                  <AdminDashboard initialTab="coupons" />
                 </AdminLayout>
               ) : <Navigate to="/login" />
             } 

@@ -199,11 +199,11 @@ const styles = StyleSheet.create({
     summaryBox: {
         alignItems: 'center',
         padding: 32,
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
         borderRadius: 24,
         marginBottom: 32,
         borderWidth: 1,
-        borderColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: 'rgba(245, 158, 11, 0.2)',
     },
     summaryLabel: {
         color: Colors.textSecondary,

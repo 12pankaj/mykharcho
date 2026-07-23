@@ -105,7 +105,82 @@ cron.schedule('0 0 * * *', async () => {
                 await whatsappService.sendReminder(emi.party_phone, variables);
             }
         }
-        console.log('Loan reminders check complete.');
+        // --- SUBSCRIPTION REMINDERS & EXPIRY ---
+        console.log('Checking for expiring and expired subscriptions...');
+
+        // 1. Reminders (7 Days Before)
+        const rem7Res = await db.query(`
+            SELECT u.id, u.push_token, u.email, p.name as plan_name 
+            FROM user_subscriptions s 
+            JOIN users u ON s.user_id = u.id 
+            JOIN plans p ON s.plan_id = p.id
+            WHERE s.status = 'active' AND DATE(s.current_period_end) = CURRENT_DATE + INTERVAL '7 days'
+        `);
+        for (let row of rem7Res.rows) {
+            if (row.push_token) {
+                try {
+                    await getMessaging().send({
+                        token: row.push_token,
+                        notification: { title: 'Subscription Expiring Soon!', body: `Your ${row.plan_name} plan expires in 7 days. Renew now to avoid losing access.` }
+                    });
+                } catch(e) {}
+            }
+        }
+
+        // 2. Reminders (3 Days Before)
+        const rem3Res = await db.query(`
+            SELECT u.id, u.push_token, u.email, p.name as plan_name 
+            FROM user_subscriptions s 
+            JOIN users u ON s.user_id = u.id 
+            JOIN plans p ON s.plan_id = p.id
+            WHERE s.status = 'active' AND DATE(s.current_period_end) = CURRENT_DATE + INTERVAL '3 days'
+        `);
+        for (let row of rem3Res.rows) {
+            if (row.push_token) {
+                try {
+                    await getMessaging().send({
+                        token: row.push_token,
+                        notification: { title: 'Action Required!', body: `Your ${row.plan_name} plan expires in 3 days. Please renew.` }
+                    });
+                } catch(e) {}
+            }
+        }
+
+        // 3. Expiry Day (0 Days) - Start Grace Period
+        const rem0Res = await db.query(`
+            SELECT u.id, u.push_token, u.email, p.name as plan_name 
+            FROM user_subscriptions s 
+            JOIN users u ON s.user_id = u.id 
+            JOIN plans p ON s.plan_id = p.id
+            WHERE s.status = 'active' AND DATE(s.current_period_end) = CURRENT_DATE
+        `);
+        for (let row of rem0Res.rows) {
+            if (row.push_token) {
+                try {
+                    await getMessaging().send({
+                        token: row.push_token,
+                        notification: { title: 'Subscription Expired', body: `Your ${row.plan_name} plan has expired. You have a 3-day grace period to renew before features lock.` }
+                    });
+                } catch(e) {}
+            }
+        }
+
+        // 4. Auto-Downgrade (3 Days After Expiry)
+        const expiredRes = await db.query(`
+            SELECT s.id, s.user_id 
+            FROM user_subscriptions s 
+            WHERE s.status = 'active' AND DATE(s.current_period_end) <= CURRENT_DATE - INTERVAL '3 days'
+        `);
+        
+        for (let row of expiredRes.rows) {
+            await db.query('BEGIN');
+            // Update subscription status
+            await db.query(`UPDATE user_subscriptions SET status = 'expired' WHERE id = $1`, [row.id]);
+            // Fallback to free plan (id = 1)
+            await db.query(`UPDATE users SET current_plan_id = 1, is_premium = FALSE WHERE id = $1`, [row.user_id]);
+            await db.query('COMMIT');
+            console.log(`Auto-downgraded user ${row.user_id} due to expired subscription.`);
+        }
         
     } catch (err) {
         console.error('Error in automation cron job:', err);

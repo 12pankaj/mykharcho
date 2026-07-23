@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0e1117;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
@@ -12,15 +12,46 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Premium Grid Background Overlay */
+.bg-grid-pattern {
+  background-size: 60px 60px;
+  background-image: 
+    linear-gradient(to right, rgba(245, 158, 11, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 158, 11, 0.02) 1px, transparent 1px);
+}
+
+/* Animated Glows */
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: translate(-10%, -10%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-10%, -10%) scale(1.15);
+    opacity: 0.45;
+  }
+}
+
+@keyframes pulse-reverse {
+  0%, 100% {
+    transform: translate(10%, 10%) scale(1.15);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(10%, 10%) scale(1);
+    opacity: 0.35;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 12s ease-in-out infinite;
+}
+
+.animate-pulse-reverse {
+  animation: pulse-reverse 15s ease-in-out infinite;
 }

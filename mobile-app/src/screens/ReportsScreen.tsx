@@ -12,8 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const screenWidth = Dimensions.get('window').width - 48; // padding 24 on each side
 
 const chartConfig = {
-    backgroundGradientFrom: '#0f172a',
-    backgroundGradientTo: '#0f172a',
+    backgroundGradientFrom: Colors.background,
+    backgroundGradientTo: Colors.background,
     color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     strokeWidth: 2, // optional, default 3
     barPercentage: 0.5,
@@ -52,7 +52,7 @@ export default function ReportsScreen() {
                     }
                 });
 
-                const colors = ['#3b82f6', '#f43f5e', '#ea580c', '#10b981', '#8b5cf6', '#ec4899', '#64748b'];
+                const colors = [Colors.primary, '#f43f5e', '#ea580c', '#10b981', '#8b5cf6', '#ec4899', '#64748b'];
                 const mappedPie = Object.keys(catMap).map((cat, idx) => ({
                     name: cat,
                     population: catMap[cat],
@@ -95,7 +95,7 @@ export default function ReportsScreen() {
     const chartData = {
         labels: barDataLabels.length > 0 ? barDataLabels : ['Mon', 'Tue', 'Wed'],
         datasets: [
-            { data: barDataIncome.length > 0 ? barDataIncome : [0,0,0], color: () => '#3b82f6' }, // Income
+            { data: barDataIncome.length > 0 ? barDataIncome : [0,0,0], color: () => Colors.primary }, // Income
             { data: barDataExpense.length > 0 ? barDataExpense : [0,0,0], color: () => '#f43f5e' }  // Expense
         ],
     };
@@ -103,7 +103,7 @@ export default function ReportsScreen() {
     const lineData = {
         labels: barDataLabels.length > 0 ? barDataLabels : ['Mon', 'Tue', 'Wed'],
         datasets: [
-            { data: barDataIncome.length > 0 ? barDataIncome : [0,0,0], color: () => '#3b82f6', strokeWidth: 2 },
+            { data: barDataIncome.length > 0 ? barDataIncome : [0,0,0], color: () => Colors.primary, strokeWidth: 2 },
             { data: barDataExpense.length > 0 ? barDataExpense : [0,0,0], color: () => '#ea580c', strokeWidth: 2 }
         ],
         legend: ["Income", "Expense"]

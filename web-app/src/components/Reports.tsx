@@ -104,10 +104,10 @@ const Reports: React.FC = () => {
                                         ))}
                                     </Pie>
                                     <RechartsTooltip 
-                                        contentStyle={{ backgroundColor: '#08172c', borderColor: '#344c77', borderRadius: '1rem', color: '#fff' }}
-                                        itemStyle={{ fontWeight: 'bold' }}
-                                        formatter={(value: any) => `₹${value.toLocaleString()}`}
-                                    />
+                                         contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }}
+                                         itemStyle={{ fontWeight: 'bold', color: '#1F2937' }}
+                                         formatter={(value: any) => `₹${value.toLocaleString()}`}
+                                     />
                                     <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -130,12 +130,12 @@ const Reports: React.FC = () => {
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#344c77" vertical={false} />
-                                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#decbaf" vertical={false} />
+                                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
                                 <RechartsTooltip 
-                                    contentStyle={{ backgroundColor: '#08172c', borderColor: '#344c77', borderRadius: '1rem', color: '#fff' }}
-                                    itemStyle={{ fontWeight: 'bold' }}
+                                    contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }}
+                                    itemStyle={{ fontWeight: 'bold', color: '#1F2937' }}
                                 />
                                 <Legend verticalAlign="top" height={36} iconType="circle" />
                                 <Bar dataKey="Income" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -166,11 +166,11 @@ const Reports: React.FC = () => {
                                         <stop offset="95%" stopColor="#c1522d" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#344c77" vertical={false} />
-                                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#decbaf" vertical={false} />
+                                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
                                 <RechartsTooltip 
-                                    contentStyle={{ backgroundColor: '#08172c', borderColor: '#344c77', borderRadius: '1rem', color: '#fff' }}
+                                    contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }}
                                 />
                                 <Area type="monotone" dataKey="Income" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorInc)" />
                                 <Area type="monotone" dataKey="Expense" stroke="#c1522d" strokeWidth={3} fillOpacity={1} fill="url(#colorExp)" />

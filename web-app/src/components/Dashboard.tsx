@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FinanceService, UserService, AdminService } from '../api/shared/apiService';
+import { FinanceService, UserService, AdminService, PromotionService } from '../api/shared/apiService';
 import { formatCurrency } from '../api/shared/utils';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -12,7 +12,8 @@ import {
     Users,
     Activity,
     Shield,
-    AlertCircle
+    AlertCircle,
+    Zap
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -26,12 +27,21 @@ const Dashboard: React.FC = () => {
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    const [activePromotion, setActivePromotion] = useState<any>(null);
+    const [timeLeft, setTimeLeft] = useState('');
+    const [showTrialModal, setShowTrialModal] = useState(false);
+    const [claimingTrial, setClaimingTrial] = useState(false);
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const profileRes = await UserService.getProfile();
+            const [profileRes, promoRes] = await Promise.all([
+                UserService.getProfile(),
+                PromotionService.getActive()
+            ]);
             const currentProfile = profileRes.data;
             setProfile(currentProfile);
+            setActivePromotion(promoRes.data.promotion);
 
             if (currentProfile.role === 'admin' || currentProfile.role === 'agent') {
                 const adminRes = await AdminService.getStats();
@@ -55,6 +65,49 @@ const Dashboard: React.FC = () => {
         fetchData();
     }, []);
 
+    // Countdown Timer for Promotion Banner
+    useEffect(() => {
+        if (!activePromotion?.end_date) return;
+        
+        const updateTimer = () => {
+            const end = new Date(activePromotion.end_date).getTime();
+            const now = new Date().getTime();
+            const diff = end - now;
+            
+            if (diff <= 0) {
+                setTimeLeft('Expired');
+            } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+            }
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [activePromotion]);
+
+    // Trial Modal Auto-trigger check
+    useEffect(() => {
+        if (
+            profile && 
+            profile.role !== 'admin' && 
+            profile.current_streak >= 7 && 
+            !profile.has_claimed_trial && 
+            (profile.current_plan_id === '197f1815-141b-492f-bd2a-398ba6dc53d9' || profile.plan_name === 'Free')
+        ) {
+            setShowTrialModal(true);
+        } else {
+            if (localStorage.getItem('trialUnlocked') === 'true' && profile && !profile.has_claimed_trial) {
+                setShowTrialModal(true);
+            } else {
+                setShowTrialModal(false);
+            }
+        }
+    }, [profile]);
+
     const expensesByCategory = transactions
         .filter(t => t.type === 'Expense')
         .reduce((acc, curr) => {
@@ -69,6 +122,28 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Active Promotion Banner */}
+            {activePromotion && timeLeft !== 'Expired' && (
+                <div className="bg-gradient-to-r from-orange-600 to-amber-500 border border-orange-500/20 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden animate-pulse">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                            <Zap className="text-white w-8 h-8 animate-bounce" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl md:text-2xl font-black text-white tracking-tight">{activePromotion.title}</h3>
+                            <p className="text-white/80 font-bold text-xs uppercase tracking-widest mt-1">Get {activePromotion.discount_percentage}% OFF on all upgrades!</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center md:items-end gap-2 relative z-10">
+                        <span className="text-xs font-black text-orange-200 uppercase tracking-widest">Flash Sale Ends In</span>
+                        <div className="bg-slate-950/80 border border-white/10 rounded-2xl px-6 py-3 text-white font-black text-xl md:text-2xl tracking-tighter tabular-nums shadow-lg">
+                            {timeLeft || '--h --m --s'}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Welcome Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -77,8 +152,13 @@ const Dashboard: React.FC = () => {
                             {profile?.role === 'admin' ? 'Admin Intelligence' : 'Financial Hub'}
                         </h2>
                         {profile && profile.role !== 'admin' && (
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${profile.current_plan_id === 3 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : profile.current_plan_id === 2 ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-slate-500/10 text-slate-500 border-slate-500/20'}`}>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${profile.current_plan_id === 'c83f759c-03c6-4bbd-b015-1ec0dce6b514' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : profile.current_plan_id === '7896e517-555e-433c-b2e3-2068b9a23450' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-slate-500/10 text-slate-500 border-slate-500/20'}`}>
                                 {profile.plan_name || 'Free'}
+                            </span>
+                        )}
+                        {profile && profile.role !== 'admin' && profile.current_streak > 0 && (
+                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border bg-orange-500/10 text-orange-500 border-orange-500/20 animate-pulse flex items-center gap-1">
+                                🔥 {profile.current_streak} Day Streak
                             </span>
                         )}
                     </div>
@@ -150,10 +230,10 @@ const Dashboard: React.FC = () => {
                                             <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                    <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '1rem', color: '#fff' }} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#decbaf" vertical={false} />
+                                    <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }} />
                                     <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -202,10 +282,10 @@ const Dashboard: React.FC = () => {
                                                 <stop offset="95%" stopColor="#fb7185" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                        <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '1rem', color: '#fff' }} itemStyle={{ fontWeight: 'bold' }} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#decbaf" vertical={false} />
+                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val/1000}k`} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }} itemStyle={{ fontWeight: 'bold', color: '#1F2937' }} />
                                         <Area type="monotone" dataKey="Income" stroke="#34d399" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
                                         <Area type="monotone" dataKey="Expense" stroke="#fb7185" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
                                     </AreaChart>
@@ -274,8 +354,8 @@ const Dashboard: React.FC = () => {
                                             ))}
                                         </Pie>
                                         <Tooltip 
-                                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '1rem', color: '#fff' }}
-                                            itemStyle={{ fontWeight: 'bold' }}
+                                            contentStyle={{ backgroundColor: '#FFFDF9', borderColor: '#FFE7B3', borderRadius: '1rem', color: '#1F2937' }}
+                                            itemStyle={{ fontWeight: 'bold', color: '#1F2937' }}
                                             formatter={(value: any) => `₹${value.toLocaleString()}`}
                                         />
                                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
@@ -287,6 +367,63 @@ const Dashboard: React.FC = () => {
                                 <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No expense data found</p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {/* 7-Day Streak Congratulations Modal */}
+            {showTrialModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-905 bg-slate-900 border border-slate-800 rounded-[3rem] p-10 max-w-lg w-full relative overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-600/10 rounded-full blur-[80px]"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-yellow-500/10 rounded-full blur-[80px]"></div>
+
+                        <div className="flex flex-col items-center text-center space-y-6 relative z-10">
+                            <div className="w-20 h-20 bg-gradient-to-tr from-orange-600 to-yellow-500 rounded-3xl flex items-center justify-center shadow-2xl animate-bounce animate-pulse">
+                                <span className="text-4xl flex items-center justify-center h-full w-full">🔥</span>
+                            </div>
+
+                            <div>
+                                <h2 className="text-3xl font-black text-white tracking-tight">7-Day Streak Achieved!</h2>
+                                <p className="text-slate-400 font-medium mt-2">You logged your expenses for 7 consecutive days. Incredible discipline!</p>
+                            </div>
+
+                            <div className="bg-slate-950/50 border border-slate-800/80 rounded-2xl p-6 w-full space-y-3">
+                                <div className="text-xs font-black text-orange-500 uppercase tracking-widest">Your Reward Unlocked</div>
+                                <h3 className="text-2xl font-black text-white">3-Day FREE Elite Trial</h3>
+                                <p className="text-slate-500 text-xs font-medium">Gain access to unlimited wallets, advanced automation rules, EMI schedules, and PDF exports instantly.</p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-4 w-full pt-4">
+                                <button
+                                    onClick={async () => {
+                                        setClaimingTrial(true);
+                                        try {
+                                            await UserService.claimTrial();
+                                            localStorage.removeItem('trialUnlocked');
+                                            await fetchData();
+                                            setShowTrialModal(false);
+                                        } catch (err: any) {
+                                            alert(err.response?.data?.error || 'Failed to claim trial');
+                                        } finally {
+                                            setClaimingTrial(false);
+                                        }
+                                    }}
+                                    disabled={claimingTrial}
+                                    className="flex-1 bg-gradient-to-r from-orange-600 to-yellow-500 hover:from-orange-500 hover:to-orange-400 text-white font-black py-4 px-6 rounded-2xl transition-all shadow-2xl shadow-orange-500/30 active:scale-[0.98]"
+                                >
+                                    {claimingTrial ? 'Activating Elite...' : 'Claim 3-Day Free Elite'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowTrialModal(false);
+                                        localStorage.removeItem('trialUnlocked');
+                                    }}
+                                    className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-4 px-6 rounded-2xl transition-all active:scale-[0.98]"
+                                >
+                                    Maybe Later
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

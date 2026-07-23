@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, Platform, Share } from 'react-native';
 import { Colors } from '../theme/colors';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 import CustomBottomSheet from '../components/CustomBottomSheet';
-import { LogOut, User, Shield, ChevronRight, Repeat, MessageSquare, Crown, Camera, Globe, Check } from 'lucide-react-native';
+import { LogOut, User, Shield, ChevronRight, Repeat, MessageSquare, Crown, Camera, Globe, Check, Gift } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { UserService } from '../api/apiService';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 
 const DUMMY_AVATARS = [
     { id: 'm1', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&h=250&q=80' },
@@ -54,6 +55,26 @@ export default function ProfileScreen({ navigation }: any) {
         };
         fetchProfile();
     }, []);
+
+    const handleCopyCode = async () => {
+        if (profile?.referral_code) {
+            await Clipboard.setStringAsync(profile.referral_code);
+            Alert.alert('Copied', 'Referral code copied to clipboard!');
+        }
+    };
+
+    const handleShareReferral = async () => {
+        if (profile?.referral_code) {
+            const shareText = `Hey! Track your expenses easily with MyKharcho. Sign up using my referral link to get a 20% discount on upgrades!\nLink: https://app.mykharcho.in/signup?ref=${profile.referral_code}`;
+            try {
+                await Share.share({
+                    message: shareText,
+                });
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
+        }
+    };
 
     const handleSaveProfile = async () => {
         if (!formData.fullName.trim()) return;
@@ -134,7 +155,7 @@ export default function ProfileScreen({ navigation }: any) {
     return (
         <View style={styles.container}>
             <Header title="Settings" subtitle="System Preferences" />
-            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 120, 120) }]}>
+            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 150, 150) }]}>
                 
                 {/* Advanced Profile Card */}
                 <GlassCard style={styles.profileCard} intensity="heavy">
@@ -155,8 +176,8 @@ export default function ProfileScreen({ navigation }: any) {
                                 <Text style={styles.badgeText}>{profile?.role || 'user'}</Text>
                             </View>
                             {profile?.is_premium && (
-                                <View style={[styles.badge, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
-                                    <Text style={[styles.badgeText, { color: '#3b82f6' }]}>Premium</Text>
+                                <View style={[styles.badge, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
+                                    <Text style={[styles.badgeText, { color: Colors.primary }]}>Premium</Text>
                                 </View>
                             )}
                         </View>
@@ -200,6 +221,36 @@ export default function ProfileScreen({ navigation }: any) {
                     </TouchableOpacity>
                 )}
 
+                {/* Referral Program Card */}
+                <Text style={styles.sectionTitle}>Referral Program</Text>
+                <GlassCard style={styles.referralCard} intensity="medium">
+                    <View style={styles.referralHeader}>
+                        <View style={[styles.iconBox, { backgroundColor: 'rgba(249, 115, 22, 0.1)', marginRight: 16 }]}>
+                            <Gift color="#f97316" size={20} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.referralCardTitle}>Give a Month, Get a Month</Text>
+                            <Text style={styles.referralCardSubtitle}>Invite friends. They get 20% off their upgrade, and you get 30 days of Pro free!</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.referralContent}>
+                        <View style={styles.codeContainer}>
+                            <Text style={styles.codeLabel}>Your Unique Code</Text>
+                            <Text style={styles.codeText}>{profile?.referral_code || '------'}</Text>
+                        </View>
+                        
+                        <View style={styles.referralActions}>
+                            <TouchableOpacity style={styles.actionBtn} onPress={handleCopyCode}>
+                                <Text style={styles.actionBtnText}>Copy Code</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#25D366', borderColor: '#25D366' }]} onPress={handleShareReferral}>
+                                <Text style={[styles.actionBtnText, { color: '#fff' }]}>Share Link</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </GlassCard>
+
                 {/* Settings Menu */}
                 <Text style={styles.sectionTitle}>Preferences</Text>
                 <View style={styles.menuContainer}>
@@ -236,8 +287,8 @@ export default function ProfileScreen({ navigation }: any) {
                         onPress={() => navigation.navigate('SupportTickets')}
                     >
                         <View style={styles.menuLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                                <MessageSquare color="#3b82f6" size={20} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                                <MessageSquare color={Colors.primary} size={20} />
                             </View>
                             <Text style={styles.menuText}>Support Desk</Text>
                         </View>
@@ -259,13 +310,20 @@ export default function ProfileScreen({ navigation }: any) {
                             <ChevronRight color={Colors.textSecondary} size={20} />
                         </TouchableOpacity>
                     )}
+                    {/* Logout */}
+                    <TouchableOpacity 
+                        style={[styles.menuItem, { borderBottomWidth: 0 }]}
+                        onPress={signOut}
+                    >
+                        <View style={styles.menuLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                                <LogOut color="#ef4444" size={20} />
+                            </View>
+                            <Text style={[styles.menuText, { color: '#ef4444' }]}>Log Out securely</Text>
+                        </View>
+                        <ChevronRight color={Colors.textSecondary} size={20} />
+                    </TouchableOpacity>
                 </View>
-
-                {/* Logout */}
-                <TouchableOpacity style={styles.logoutBtn} onPress={signOut}>
-                    <LogOut color="#ef4444" size={20} />
-                    <Text style={styles.logoutText}>Log Out securely</Text>
-                </TouchableOpacity>
 
             </ScrollView>
 
@@ -417,7 +475,7 @@ const styles = StyleSheet.create({
     checkOverlay: {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(59, 130, 246, 0.4)',
+        backgroundColor: 'rgba(245, 158, 11, 0.4)',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -589,5 +647,69 @@ const styles = StyleSheet.create({
         color: Colors.white,
         fontSize: 16,
         fontWeight: '800',
-    }
+    },
+    referralCard: {
+        padding: 20,
+        marginBottom: 24,
+        borderRadius: 24,
+    },
+    referralHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    referralCardTitle: {
+        fontSize: 16,
+        fontWeight: '900',
+        color: Colors.textPrimary,
+    },
+    referralCardSubtitle: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        marginTop: 2,
+        fontWeight: '500',
+        lineHeight: 16,
+    },
+    referralContent: {
+        borderTopWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.05)',
+        paddingTop: 16,
+    },
+    codeContainer: {
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    codeLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    codeText: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: Colors.primary,
+        letterSpacing: 2,
+    },
+    referralActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    actionBtn: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionBtnText: {
+        color: Colors.textPrimary,
+        fontSize: 13,
+        fontWeight: '800',
+    },
 });

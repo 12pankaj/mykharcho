@@ -7,9 +7,12 @@ import {
     LogOut,
     Menu,
     X,
+    Tag,
     Users,
     Zap,
-    ChevronRight
+    ChevronRight,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { UserService, SERVER_URL } from '../api/shared/apiService';
 
@@ -23,16 +26,37 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [profile, setProfile] = useState<any>(null);
+    const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
 
     useEffect(() => {
         UserService.getProfile().then(res => setProfile(res.data));
+        
+        const handleThemeChange = () => {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+        };
+        window.addEventListener('themeChanged', handleThemeChange);
+        return () => window.removeEventListener('themeChanged', handleThemeChange);
     }, []);
+
+    const toggleTheme = () => {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            setIsDarkMode(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            setIsDarkMode(true);
+        }
+        window.dispatchEvent(new Event('themeChanged'));
+    };
 
     const navItems = [
         { icon: <LayoutDashboard size={24}/>, label: 'Command Center', path: '/dashboard' },
         { icon: <CreditCard size={24}/>, label: 'Revenue Hub', path: '/admin/payments' },
         { icon: <LifeBuoy size={24}/>, label: 'Support Desk', path: '/admin/tickets' },
         { icon: <Zap size={24}/>, label: 'Plan Manager', path: '/admin/plans' },
+        { icon: <Tag size={24}/>, label: 'Promo Codes', path: '/admin/coupons' },
         { icon: <Users size={24}/>, label: 'User Directory', path: '/admin/users' },
     ];
 
@@ -44,15 +68,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
     };
 
     return (
-        <div className="flex h-screen bg-[#0c3468] text-slate-300 font-sans selection:bg-[#c1522d]/30 overflow-hidden">
+        <div className="flex h-screen font-sans overflow-hidden" style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)'}}>
             {/* Admin Sidebar */}
-            <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r border-slate-800/50 bg-[#0c3468] transition-all duration-500 ease-in-out flex-col z-50`}>
+            <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r transition-all duration-500 ease-in-out flex-col z-50`} style={{backgroundColor: 'var(--color-sidebar-bg)', borderColor: 'var(--color-sidebar-border)'}}>
                 <div className="p-8 flex items-center gap-4 cursor-pointer" onClick={() => navigate('/admin-portal')}>
-                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2" style={{borderColor: 'var(--color-primary)', boxShadow: '0 0 16px rgba(var(--color-primary-rgb),0.3)'}}/>
                     {isSidebarOpen && (
                         <div className="animate-in fade-in duration-700">
-                            <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Admin Portal</span>
+                            <span className="text-2xl font-black tracking-tighter block leading-none" style={{color: 'var(--color-text-primary)'}}>My<span style={{color: 'var(--color-primary)'}}>Kharcho</span></span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{color: 'var(--color-text-secondary)'}}>Admin Portal</span>
                         </div>
                     )}
                 </div>
@@ -64,9 +88,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                             onClick={() => navigate(item.path)}
                             className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group relative ${
                                 location.pathname === item.path 
-                                ? 'bg-[#c1522d] text-white shadow-xl shadow-[#c1522d]/20' 
-                                : 'text-slate-500 hover:bg-[#082a52] hover:text-slate-300'
+                                ? 'text-white shadow-xl' 
+                                : ''
                             }`}
+                            style={location.pathname === item.path 
+                                ? {background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', boxShadow: '0 4px 20px rgba(var(--color-primary-rgb),0.35)', color: '#fff'}
+                                : {color: 'var(--color-text-secondary)'}}
                         >
                             <div className={`${location.pathname === item.path ? 'scale-110' : 'group-hover:scale-110'} transition-transform duration-300`}>
                                 {item.icon}
@@ -79,19 +106,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                     ))}
                 </nav>
 
-                <div className="p-8 border-t border-slate-800/50 bg-[#082a52]/30">
+                <div className="p-8 border-t" style={{borderColor: 'var(--color-sidebar-border)', backgroundColor: 'rgba(var(--color-primary-rgb),0.04)'}}>
                     <div className={`flex items-center gap-4 ${!isSidebarOpen && 'justify-center'}`}>
-                        <div className="w-12 h-12 rounded-2xl bg-[#0c3468] p-0.5 border border-slate-800 shadow-xl overflow-hidden shrink-0">
-                            <img src={getProfilePic()} className="w-full h-full object-cover" alt="admin"/>
+                        <div className="w-12 h-12 rounded-2xl p-0.5 border shadow-xl overflow-hidden shrink-0" style={{backgroundColor: 'var(--color-border)', borderColor: 'var(--color-border)'}}>
+                            <img src={getProfilePic()} className="w-full h-full object-cover rounded-xl" alt="admin"/>
                         </div>
                         {isSidebarOpen && (
                             <div className="min-w-0">
-                                <p className="text-sm font-black text-white truncate">{profile?.full_name}</p>
-                                <p className="text-[10px] text-[#c1522d] font-bold uppercase tracking-widest">Master Admin</p>
+                                <p className="text-sm font-black truncate" style={{color: 'var(--color-text-primary)'}}>{profile?.full_name}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest" style={{color: 'var(--color-primary)'}}>Master Admin</p>
                             </div>
                         )}
                         {isSidebarOpen && (
-                            <button onClick={onLogout} className="ml-auto p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all">
+                            <button onClick={onLogout} className="ml-auto p-2 rounded-xl transition-all" style={{color: 'var(--color-text-secondary)'}}>
                                 <LogOut size={20}/>
                             </button>
                         )}
@@ -100,20 +127,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 relative bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-orange-600/5 via-transparent to-transparent">
+            <main className="flex-1 flex flex-col min-w-0 relative">
                 {/* Header */}
-                <header className="h-24 border-b border-slate-800/50 flex items-center justify-between px-10 bg-[#0c3468]/20 backdrop-blur-md z-40">
+                <header className="h-24 border-b flex items-center justify-between px-10 backdrop-blur-md z-40" style={{backgroundColor: 'color-mix(in srgb, var(--color-sidebar-bg) 88%, transparent)', borderColor: 'var(--color-sidebar-border)'}}>
                     <button 
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="p-3 bg-[#0c3468] border border-slate-800 rounded-xl hover:bg-slate-800 transition-all text-slate-400"
+                        className="p-3 border rounded-xl transition-all" style={{backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)'}}
                     >
                         {isSidebarOpen ? <X size={20}/> : <Menu size={20}/>}
                     </button>
 
                     <div className="flex items-center gap-6">
-                        <div className="px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-2">System Health:</span>
-                            <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest animate-pulse">Optimal</span>
+                        {/* Theme Toggler */}
+                        <button 
+                            onClick={toggleTheme}
+                            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                            className="p-3 rounded-xl transition-all active:scale-90" style={{color: 'var(--color-text-secondary)'}}
+                        >
+                            {isDarkMode ? <Sun size={20} style={{color: 'var(--color-accent)'}} /> : <Moon size={20} />}
+                        </button>
+
+                        <div className="px-4 py-2 border rounded-xl" style={{backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)'}}>
+                            <span className="text-[10px] font-black uppercase tracking-widest mr-2" style={{color: 'var(--color-text-secondary)'}}>System Health:</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest animate-pulse" style={{color: 'var(--color-primary)'}}>Optimal</span>
                         </div>
                     </div>
                 </header>

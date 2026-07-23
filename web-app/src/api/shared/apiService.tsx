@@ -50,6 +50,15 @@ export const UserService = {
     uploadProfilePic: (formData: FormData) => api.post('/profile/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
+    claimTrial: () => api.post('/user/claim-trial'),
+};
+
+export const PromotionService = {
+    getActive: () => api.get('/promotions/active'),
+    getAll: () => api.get('/admin/promotions'),
+    create: (data: any) => api.post('/admin/promotions', data),
+    update: (data: any) => api.put('/admin/promotions', data),
+    delete: (id: string | number) => api.delete(`/admin/promotions/${id}`),
 };
 
 export const WalletService = {

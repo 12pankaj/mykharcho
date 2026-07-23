@@ -8,7 +8,8 @@ import {
     User as UserIcon,
     Shield,
     Globe,
-    RefreshCw
+    RefreshCw,
+    Gift
 } from 'lucide-react';
 
 const DUMMY_AVATARS = [
@@ -27,11 +28,21 @@ const Settings: React.FC = () => {
     const [formData, setFormData] = useState({ fullName: '', currency: '', countryCode: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [notification, setNotification] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
 
     const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
         setNotification({ msg, type });
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleCopy = () => {
+        if (profile?.referral_code) {
+            navigator.clipboard.writeText(profile.referral_code);
+            setCopied(true);
+            showNotification('Referral code copied to clipboard!');
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     useEffect(() => {
@@ -219,6 +230,65 @@ const Settings: React.FC = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            {/* Referral Card */}
+            <div className="bg-slate-950/50 border border-slate-800 rounded-[3rem] p-10 overflow-hidden relative shadow-2xl">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/5 rounded-full blur-3xl -mr-40 -mt-40"></div>
+                
+                <div className="relative z-10 space-y-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                            <Gift className="text-orange-500 w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-white">Give a Month, Get a Month</h2>
+                            <p className="text-slate-500 font-medium text-sm">Invite friends to MyKharcho. They get a 20% discount on purchase, and you get 30 days of Pro for free!</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center pt-4 border-t border-slate-800/50">
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Your Unique Referral Code</label>
+                            <div className="flex gap-3">
+                                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 text-white font-black text-xl tracking-wider select-all flex items-center justify-between">
+                                    <span>{profile?.referral_code || '------'}</span>
+                                </div>
+                                <button 
+                                    onClick={handleCopy}
+                                    className="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white font-bold px-6 rounded-2xl transition-all active:scale-[0.98]"
+                                >
+                                    {copied ? 'Copied!' : 'Copy Code'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Direct Sharing Link</label>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        const shareText = `Hey! Manage your expenses smarter with MyKharcho. Sign up using my link to get a 20% discount: https://app.mykharcho.in/signup?ref=${profile?.referral_code}`;
+                                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                                    }}
+                                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-4 px-6 rounded-2xl transition-all shadow-2xl shadow-green-500/20 active:scale-[0.98] text-center"
+                                >
+                                    Share on WhatsApp
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const link = `https://app.mykharcho.in/signup?ref=${profile?.referral_code}`;
+                                        navigator.clipboard.writeText(link);
+                                        showNotification('Referral link copied!');
+                                    }}
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white font-black py-4 px-6 rounded-2xl transition-all active:scale-[0.98] text-center"
+                                >
+                                    Copy Link
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -6,7 +6,8 @@ import GlassCard from '../components/GlassCard';
 import CustomBottomSheet from '../components/CustomBottomSheet';
 import { ArrowDownRight, ArrowUpRight, TrendingUp, Wallet, Clock, X, Camera, Mic, Zap, CreditCard } from 'lucide-react-native';
 import { PieChart } from 'react-native-chart-kit';
-import { AIService, DashboardService, TransactionService, WalletService, UserService } from '../api/apiService';
+import { AIService, DashboardService, TransactionService, WalletService, UserService, PromotionService } from '../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync } from '../services/NotificationService';
 import { TextInput, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,12 +27,16 @@ export default function DashboardScreen() {
     const [pieData, setPieData] = useState<any[]>([]);
     const [wallets, setWallets] = useState([]);
     const insets = useSafeAreaInsets();
+    const [activePromotion, setActivePromotion] = useState<any>(null);
+    const [timeLeft, setTimeLeft] = useState('');
+    const [showTrialModal, setShowTrialModal] = useState(false);
+    const [claimingTrial, setClaimingTrial] = useState(false);
 
     const screenWidth = Dimensions.get('window').width - 48; // padding 24 on each side
 
     const chartConfig = {
-        backgroundGradientFrom: '#0f172a',
-        backgroundGradientTo: '#0f172a',
+        backgroundGradientFrom: Colors.background,
+        backgroundGradientTo: Colors.background,
         color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
         strokeWidth: 2,
         useShadowColorFromDataset: false,
@@ -79,7 +84,7 @@ export default function DashboardScreen() {
                 amount: catMap[cat]
             })).sort((a, b) => b.amount - a.amount).slice(0, 4); // Top 4
             
-            const colors = ['#3b82f6', '#f43f5e', '#ea580c', '#10b981'];
+            const colors = [Colors.primary, '#f43f5e', '#ea580c', '#10b981'];
             const mappedPie = mapped.map((item, idx) => ({
                 name: item.name,
                 population: item.amount,
@@ -101,12 +106,67 @@ export default function DashboardScreen() {
         } catch (err) {
             console.error('Failed to load wallets for dashboard', err);
         }
+
+        // Fetch Active Promotion
+        try {
+            const promoRes = await PromotionService.getActive();
+            setActivePromotion(promoRes.data.promotion);
+        } catch (err) {
+            console.error('Failed to load active promotion in dashboard', err);
+        }
     };
 
     useEffect(() => {
         fetchDashboard();
         registerForPushNotificationsAsync();
     }, []);
+
+    // Countdown Timer for Promotion Banner
+    useEffect(() => {
+        if (!activePromotion?.end_date) return;
+        
+        const updateTimer = () => {
+            const end = new Date(activePromotion.end_date).getTime();
+            const now = new Date().getTime();
+            const diff = end - now;
+            
+            if (diff <= 0) {
+                setTimeLeft('Expired');
+            } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+            }
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [activePromotion]);
+
+    // Trial Modal Auto-trigger check
+    useEffect(() => {
+        const checkTrialUnlocked = async () => {
+            if (
+                profile && 
+                profile.role !== 'admin' && 
+                profile.current_streak >= 7 && 
+                !profile.has_claimed_trial && 
+                (profile.current_plan_id === '197f1815-141b-492f-bd2a-398ba6dc53d9' || profile.plan_name === 'Free')
+            ) {
+                setShowTrialModal(true);
+            } else {
+                const isUnlocked = await AsyncStorage.getItem('trialUnlocked');
+                if (isUnlocked === 'true' && profile && !profile.has_claimed_trial) {
+                    setShowTrialModal(true);
+                } else {
+                    setShowTrialModal(false);
+                }
+            }
+        };
+        checkTrialUnlocked();
+    }, [profile]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -128,21 +188,52 @@ export default function DashboardScreen() {
                 onNotificationPress={() => navigation.navigate('Notifications' as never)}
             />
             {profile && profile.role !== 'admin' && (
-                <View style={{ paddingHorizontal: 24, marginBottom: 10 }}>
-                    <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.2)' }}>
-                        <Text style={{ color: '#3b82f6', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{profile.plan_name || 'Free'} Plan</Text>
+                <View style={{ paddingHorizontal: 24, marginBottom: 10, flexDirection: 'row', gap: 8 }}>
+                    <View style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+                        <Text style={{ color: Colors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{profile.plan_name || 'Free'} Plan</Text>
                     </View>
+                    {profile.current_streak > 0 && (
+                        <View style={{ backgroundColor: 'rgba(234, 88, 12, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(234, 88, 12, 0.2)' }}>
+                            <Text style={{ color: '#ea580c', fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>🔥 {profile.current_streak} Day Streak</Text>
+                        </View>
+                    )}
                 </View>
             )}
             <ScrollView
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom + 120, 120) }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
+                {/* Active Promotion Banner */}
+                {activePromotion && timeLeft !== 'Expired' && (
+                    <LinearGradient
+                        colors={['#f97316', '#eab308']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.promoBanner}
+                    >
+                        <View style={styles.promoHeader}>
+                            <View style={styles.promoIconContainer}>
+                                <Zap color="#fff" size={20} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.promoTitle}>{activePromotion.title}</Text>
+                                <Text style={styles.promoSubtitle}>Get {activePromotion.discount_percentage}% OFF on all upgrades!</Text>
+                            </View>
+                        </View>
+                        <View style={styles.promoTimerRow}>
+                            <Text style={styles.promoTimerLabel}>Flash Sale Ends In:</Text>
+                            <View style={styles.promoTimerContainer}>
+                                <Text style={styles.promoTimerText}>{timeLeft}</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                )}
+
                 {/* Stat Cards Container */}
                 <View style={styles.statsContainer}>
                     {/* Available Balance Card */}
                     <LinearGradient 
-                        colors={['#2563eb', '#1d4ed8']} 
+                        colors={[Colors.primary, Colors.primaryDark]} 
                         start={{ x: 0, y: 0 }} 
                         end={{ x: 1, y: 1 }} 
                         style={styles.gradientCard}
@@ -276,6 +367,74 @@ export default function DashboardScreen() {
             </ScrollView>
 
             {/* Sheets replaced by AddTransactionScreen */}
+
+            {/* Trial Claim Modal */}
+            {showTrialModal && (
+                <View style={styles.modalOverlay}>
+                    <GlassCard intensity="heavy" style={styles.modalCard}>
+                        <View style={styles.fireCircle}>
+                            <Text style={styles.fireEmoji}>🔥</Text>
+                        </View>
+                        
+                        <Text style={styles.modalTitle}>7-Day Streak Achieved!</Text>
+                        <Text style={styles.modalDescription}>
+                            You logged your expenses for 7 consecutive days. Incredible discipline!
+                        </Text>
+                        
+                        <View style={styles.rewardCard}>
+                            <Text style={styles.rewardLabel}>YOUR REWARD UNLOCKED</Text>
+                            <Text style={styles.rewardTitle}>3-Day FREE Elite Trial</Text>
+                            <Text style={styles.rewardDesc}>
+                                Gain access to unlimited wallets, advanced automation rules, EMI schedules, and PDF exports instantly.
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity 
+                                style={styles.claimBtn}
+                                onPress={async () => {
+                                    setClaimingTrial(true);
+                                    try {
+                                        await UserService.claimTrial();
+                                        await AsyncStorage.removeItem('trialUnlocked');
+                                        await fetchDashboard();
+                                        setShowTrialModal(false);
+                                        Alert.alert("Success", "Your 3-Day Free Elite Trial is active!");
+                                    } catch (err: any) {
+                                        Alert.alert("Error", err.response?.data?.error || 'Failed to claim trial');
+                                    } finally {
+                                        setClaimingTrial(false);
+                                    }
+                                }}
+                                disabled={claimingTrial}
+                            >
+                                <LinearGradient
+                                    colors={['#f97316', '#eab308']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.claimGradient}
+                                >
+                                    {claimingTrial ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={styles.claimBtnText}>Claim 3-Day Free Elite</Text>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                                style={styles.laterBtn}
+                                onPress={async () => {
+                                    await AsyncStorage.removeItem('trialUnlocked');
+                                    setShowTrialModal(false);
+                                }}
+                            >
+                                <Text style={styles.laterBtnText}>Maybe Later</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </GlassCard>
+                </View>
+            )}
         </View>
     );
 }
@@ -567,5 +726,178 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    promoBanner: {
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    promoHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 16,
+    },
+    promoIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    promoTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '900',
+        letterSpacing: -0.5,
+    },
+    promoSubtitle: {
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontSize: 12,
+        fontWeight: '700',
+        marginTop: 2,
+    },
+    promoTimerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    promoTimerLabel: {
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: 11,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    promoTimerContainer: {
+        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    promoTimerText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+        zIndex: 1000,
+    },
+    modalCard: {
+        width: '100%',
+        borderRadius: 32,
+        padding: 24,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    fireCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+        borderWidth: 2,
+        borderColor: '#ea580c',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+    fireEmoji: {
+        fontSize: 36,
+    },
+    modalTitle: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: '900',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    modalDescription: {
+        color: Colors.textSecondary,
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+    },
+    rewardCard: {
+        width: '100%',
+        backgroundColor: 'rgba(15, 23, 42, 0.4)',
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.05)',
+        marginBottom: 24,
+        gap: 6,
+    },
+    rewardLabel: {
+        color: '#ea580c',
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    rewardTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '900',
+    },
+    rewardDesc: {
+        color: Colors.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+        lineHeight: 18,
+    },
+    modalButtons: {
+        width: '100%',
+        gap: 12,
+    },
+    claimBtn: {
+        width: '100%',
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    claimGradient: {
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    claimBtnText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '900',
+    },
+    laterBtn: {
+        width: '100%',
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    },
+    laterBtnText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
     }
 });

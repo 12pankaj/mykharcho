@@ -213,8 +213,8 @@ export default function SupportTicketsScreen() {
                             <GlassCard style={styles.ticketCard}>
                                 <View style={styles.ticketHeader}>
                                     <Text style={styles.ticketSubject} numberOfLines={1}>{ticket.subject}</Text>
-                                    <View style={[styles.badge, { backgroundColor: ticket.status === 'Open' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)' }]}>
-                                        <Text style={[styles.badgeText, { color: ticket.status === 'Open' ? '#3b82f6' : '#22c55e' }]}>
+                                    <View style={[styles.badge, { backgroundColor: ticket.status === 'Open' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(34, 197, 94, 0.1)' }]}>
+                                        <Text style={[styles.badgeText, { color: ticket.status === 'Open' ? Colors.primary : '#22c55e' }]}>
                                             {ticket.status}
                                         </Text>
                                     </View>

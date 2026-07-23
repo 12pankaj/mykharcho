@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../api/shared/apiService';
-import { Shield, Mail, Lock, User, Globe, ArrowRight } from 'lucide-react';
+import { Shield, Mail, Lock, User, Globe, ArrowRight, Gift } from 'lucide-react';
 
 interface SignupProps {
     onAuthSuccess: (token: string) => void;
@@ -13,6 +13,7 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [currency, setCurrency] = useState('INR');
+    const [referredByCode, setReferredByCode] = useState(() => new URLSearchParams(window.location.search).get('ref') || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -27,7 +28,8 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                 email, 
                 password, 
                 currency,
-                countryCode: 'IN' 
+                countryCode: 'IN',
+                referredByCode
             });
             console.log('Signup API Response:', response.data);
 
@@ -45,20 +47,20 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6 relative overflow-hidden">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/20 rounded-full blur-[120px]"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px]"></div>
+        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden" style={{backgroundColor: 'var(--color-bg-app)'}}>
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] aurora-orb aurora-orb-gold"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] aurora-orb aurora-orb-cyan"></div>
 
             <div className="relative w-full max-w-[480px]">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-2xl mb-4">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl mb-4" style={{background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', boxShadow: '0 8px 28px rgba(var(--color-primary-rgb),0.35)'}}>
                         <Shield className="text-white w-7 h-7" />
                     </div>
-                    <h1 className="text-3xl font-black text-white">Create Account</h1>
-                    <p className="text-slate-400 font-medium">Join the next-gen financial revolution</p>
+                    <h1 className="text-3xl font-black" style={{color: 'var(--color-text-primary)'}}>Create Account</h1>
+                    <p className="font-medium" style={{color: 'var(--color-text-secondary)'}}>Join the next-gen financial revolution</p>
                 </div>
 
-                <div className="bg-slate-950/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl">
+                <div className="backdrop-blur-xl border rounded-3xl p-8 shadow-2xl" style={{backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)'}}>
                     <form onSubmit={handleSignup} className="space-y-4">
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm font-medium">
@@ -68,14 +70,15 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
-                                <div className="relative group">
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400" />
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="John Doe"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                 <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{color: 'var(--color-text-secondary)'}}>Full Name</label>
+                                 <div className="relative group">
+                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" style={{color: 'var(--color-text-muted)', zIndex: 10}} />
+                                     <input
+                                         type="text"
+                                         required
+                                         placeholder="John Doe"
+                                         className="w-full rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none transition-all"
+                                         style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-border)', position: 'relative', zIndex: 1}}
                                         value={fullName}
                                         onChange={(e) => setFullName(e.target.value)}
                                     />
@@ -83,11 +86,12 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Currency</label>
-                                <div className="relative group">
-                                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400" />
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 appearance-none"
+                                 <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{color: 'var(--color-text-secondary)'}}>Currency</label>
+                                 <div className="relative group">
+                                     <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" style={{color: 'var(--color-text-muted)', zIndex: 10}} />
+                                     <select
+                                         className="w-full rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none transition-all appearance-none"
+                                         style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-border)', position: 'relative', zIndex: 1}}
                                         value={currency}
                                         onChange={(e) => setCurrency(e.target.value)}
                                     >
@@ -101,14 +105,15 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
-                            <div className="relative group">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400" />
-                                <input
-                                    type="email"
-                                    required
-                                    placeholder="john@example.com"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                             <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{color: 'var(--color-text-secondary)'}}>Email Address</label>
+                             <div className="relative group">
+                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" style={{color: 'var(--color-text-muted)', zIndex: 10}} />
+                                 <input
+                                     type="email"
+                                     required
+                                     placeholder="john@example.com"
+                                     className="w-full rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none transition-all"
+                                     style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-border)', position: 'relative', zIndex: 1}}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
@@ -116,16 +121,32 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Secure Password</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400" />
-                                <input
-                                    type="password"
-                                    required
-                                    placeholder="••••••••"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-11 pr-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                             <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{color: 'var(--color-text-secondary)'}}>Secure Password</label>
+                             <div className="relative group">
+                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" style={{color: 'var(--color-text-muted)', zIndex: 10}} />
+                                 <input
+                                     type="password"
+                                     required
+                                     placeholder="••••••••"
+                                     className="w-full rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none transition-all"
+                                     style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-border)', position: 'relative', zIndex: 1}}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                             <label className="text-xs font-bold uppercase tracking-wider ml-1" style={{color: 'var(--color-text-secondary)'}}>Referral Code (Optional)</label>
+                             <div className="relative group">
+                                 <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" style={{color: 'var(--color-text-muted)', zIndex: 10}} />
+                                 <input
+                                     type="text"
+                                     placeholder="e.g. PANKAJ"
+                                     className="w-full rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none transition-all uppercase"
+                                     style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-border)', position: 'relative', zIndex: 1}}
+                                    value={referredByCode}
+                                    onChange={(e) => setReferredByCode(e.target.value.toUpperCase())}
                                 />
                             </div>
                         </div>
@@ -133,7 +154,8 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-70 mt-4"
+                            className="w-full group text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-70 mt-4"
+                            style={{background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', boxShadow: '0 6px 20px rgba(var(--color-primary-rgb),0.3)'}}
                         >
                             <span>{loading ? 'Processing...' : 'Create Empire Account'}</span>
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -141,9 +163,7 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
                     </form>
                 </div>
 
-                <p className="text-center mt-6 text-slate-500 text-sm font-medium">
-                    Already an emperor? <button onClick={() => navigate('/login')} className="text-blue-400 hover:text-blue-300 transition-colors font-bold">Sign In</button>
-                </p>
+                <p className="text-center mt-6 text-sm font-medium" style={{color: 'var(--color-text-secondary)'}}>Already an emperor? <button onClick={() => navigate('/login')} className="font-bold transition-colors" style={{color: 'var(--color-primary)'}}>Sign In</button></p>
             </div>
         </div>
     );

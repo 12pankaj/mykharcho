@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, Zap, Camera, X } from 'lucide-react-native';
 import { TransactionService, AIService } from '../api/apiService';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddTransactionScreen({ route, navigation }: any) {
     const { editingTransaction, wallets, refreshCallback, initialMode, initialType } = route.params || {};
@@ -48,7 +49,7 @@ export default function AddTransactionScreen({ route, navigation }: any) {
                     transaction_date: transactionDate
                 });
             } else {
-                await TransactionService.add({
+                const res = await TransactionService.add({
                     walletId,
                     amount: parseFloat(amount),
                     type: txType,
@@ -56,6 +57,9 @@ export default function AddTransactionScreen({ route, navigation }: any) {
                     notes: notes || 'Added from Mobile App',
                     transaction_date: transactionDate
                 });
+                if (res.data && res.data.trialUnlocked) {
+                    await AsyncStorage.setItem('trialUnlocked', 'true');
+                }
             }
 
             if (refreshCallback) {

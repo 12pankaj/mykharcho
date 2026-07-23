@@ -4,15 +4,15 @@ import { ChevronLeft } from 'lucide-react';
 
 export default function PrivacyPolicy() {
     return (
-        <div className="min-h-screen bg-[#061224] text-white">
-            <header className="fixed top-0 left-0 right-0 z-50 bg-[#061224]/80 backdrop-blur-xl border-b border-slate-800">
+        <div className="min-h-screen bg-[#0e1117] text-white">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900/50">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 text-white hover:text-slate-300 transition-colors">
                         <ChevronLeft size={20} />
                         <span className="font-bold">Back to Home</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#c1522d] to-orange-600 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
                             <span className="font-black text-white text-lg">₹</span>
                         </div>
                         <span className="text-xl font-black tracking-tight">MyKharcho</span>
@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
 
             <main className="pt-32 pb-20 px-6">
                 <div className="max-w-3xl mx-auto bg-slate-900/50 p-8 md:p-12 rounded-[2rem] border border-slate-800">
-                    <h1 className="text-4xl font-black mb-8 text-[#c1522d]">Privacy Policy</h1>
+                    <h1 className="text-4xl font-black mb-8 text-amber-500">Privacy Policy</h1>
                     
                     <div className="space-y-8 text-slate-300 leading-relaxed font-medium">
                         <section>

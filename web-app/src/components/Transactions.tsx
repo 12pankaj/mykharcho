@@ -92,8 +92,12 @@ const Transactions: React.FC = () => {
                 await FinanceService.update(editingTx.id, txForm);
                 showNotification('Transaction updated!');
             } else {
-                await FinanceService.add(txForm);
+                const res = await FinanceService.add(txForm);
                 showNotification('Transaction added successfully!');
+                if (res.data && res.data.trialUnlocked) {
+                    localStorage.setItem('trialUnlocked', 'true');
+                    showNotification('🔥 7-Day Streak! Free Elite Trial Unlocked!', 'success');
+                }
             }
             setIsAddTxOpen(false);
             setEditingTx(null);
@@ -421,8 +425,14 @@ const Transactions: React.FC = () => {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
-                                <input type="text" placeholder="Category (e.g., Salary, Rent)" required value={txForm.category} onChange={e => setTxForm({...txForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
-                                <input type="date" required value={txForm.transaction_date} onChange={e => setTxForm({...txForm, transaction_date: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
+                                    <input type="text" placeholder="Category (e.g., Salary, Rent)" required value={txForm.category} onChange={e => setTxForm({...txForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Transaction Date</label>
+                                    <input type="date" required value={txForm.transaction_date} onChange={e => setTxForm({...txForm, transaction_date: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                                </div>
                             </div>
                             <textarea placeholder="Optional notes" value={txForm.notes} onChange={e => setTxForm({...txForm, notes: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold h-24 resize-none" />
                             <div className="flex gap-4">
@@ -439,7 +449,10 @@ const Transactions: React.FC = () => {
                     <div className="bg-slate-950 border border-slate-800 rounded-[3rem] w-full max-w-lg p-10 relative shadow-2xl animate-in zoom-in-95 duration-300">
                         <h2 className="text-2xl font-black text-white mb-8">Setup Auto-Record</h2>
                         <form onSubmit={handleAddRule} className="space-y-6">
-                            <input type="text" placeholder="Rule Name (e.g., Netflix Subscription)" required value={ruleForm.name} onChange={e => setRuleForm({...ruleForm, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Rule Name</label>
+                                <input type="text" placeholder="Rule Name (e.g., Netflix Subscription)" required value={ruleForm.name} onChange={e => setRuleForm({...ruleForm, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-3">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Frequency</label>
@@ -455,17 +468,26 @@ const Transactions: React.FC = () => {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
-                                <select required value={ruleForm.walletId} onChange={e => setRuleForm({...ruleForm, walletId: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold appearance-none">
-                                    <option value="" disabled>Deduct From</option>
-                                    {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                </select>
-                                <input type="date" required value={ruleForm.nextRunDate} onChange={e => setRuleForm({...ruleForm, nextRunDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold text-sm" />
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Deduct From</label>
+                                    <select required value={ruleForm.walletId} onChange={e => setRuleForm({...ruleForm, walletId: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold appearance-none">
+                                        <option value="" disabled>Select Wallet</option>
+                                        {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Next Run Date</label>
+                                    <input type="date" required value={ruleForm.nextRunDate} onChange={e => setRuleForm({...ruleForm, nextRunDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold text-sm" />
+                                </div>
                             </div>
-                            <input type="text" placeholder="Category" required value={ruleForm.category} onChange={e => setRuleForm({...ruleForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
+                                <input type="text" placeholder="Category (e.g. Subscriptions, Salary)" required value={ruleForm.category} onChange={e => setRuleForm({...ruleForm, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
+                            </div>
                             
                             <div className="flex gap-4">
-                                <button type="button" onClick={() => setIsAddRuleOpen(false)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-black py-5 rounded-2xl transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 text-white font-black py-5 rounded-2xl transition-all shadow-xl bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/30">Activate Rule</button>
+                                <button type="button" onClick={() => setIsAddRuleOpen(false)} className="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold py-4 rounded-xl transition-all">Cancel</button>
+                                <button type="submit" className="flex-1 text-white font-black py-4 rounded-xl transition-all shadow-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 shadow-amber-500/10">Activate Rule</button>
                             </div>
                         </form>
                     </div>

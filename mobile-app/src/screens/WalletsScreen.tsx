@@ -74,7 +74,7 @@ export default function WalletsScreen() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'Bank': return <Landmark color="#3b82f6" size={24} />;
+            case 'Bank': return <Landmark color={Colors.primary} size={24} />;
             case 'Credit Card': return <CreditCard color="#a855f7" size={24} />;
             case 'Cash': return <Coins color="#22c55e" size={24} />;
             default: return <WalletIcon color={Colors.primary} size={24} />;
@@ -168,10 +168,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: 'rgba(59, 130, 246, 0.1)', // Light blue bg
-        borderRadius: 24,
+        backgroundColor: 'rgba(245, 158, 11, 0.1)', // Gold bg
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: 'rgba(245, 158, 11, 0.2)',
         borderStyle: 'dashed',
         marginBottom: 24,
         gap: 16,

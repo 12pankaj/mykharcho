@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     iconContainerFocused: {
-        backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue background for active tab
+        backgroundColor: 'rgba(245, 158, 11, 0.15)', // Gold background for active tab
     }
 });

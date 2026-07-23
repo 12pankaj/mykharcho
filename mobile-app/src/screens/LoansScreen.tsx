@@ -111,7 +111,7 @@ export default function LoansScreen() {
                     <head>
                         <style>
                             body { font-family: sans-serif; padding: 20px; color: #333; }
-                            h1 { color: #2563eb; margin-bottom: 5px; }
+                            h1 { color: #F59E0B; margin-bottom: 5px; }
                             .header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
                             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                             th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
@@ -329,7 +329,7 @@ export default function LoansScreen() {
                         <Text style={{color: Colors.textSecondary, fontSize: 12, fontWeight: 'bold'}}>{selectedContract?.party_name}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                        <TouchableOpacity style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={() => setIsAddEMIVisible(true)}>
+                        <TouchableOpacity style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={() => setIsAddEMIVisible(true)}>
                             <Text style={{ color: Colors.primary, fontWeight: 'bold', fontSize: 12 }}>+ Add EMI</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => setIsViewEMIsVisible(false)}>
@@ -358,7 +358,7 @@ export default function LoansScreen() {
                                 </View>
                                 {emi.status !== 'Paid' && (
                                     <TouchableOpacity 
-                                        style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 }}
+                                        style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 }}
                                         onPress={() => handleOpenPay(emi, selectedContract)}
                                     >
                                         <Text style={{ color: Colors.primary, fontWeight: 'bold', fontSize: 12 }}>Pay Now</Text>
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     tabActive: {
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        backgroundColor: 'rgba(245, 158, 11, 0.2)',
     },
     tabText: {
         color: Colors.textSecondary,

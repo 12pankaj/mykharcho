@@ -1,16 +1,603 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #08172c;
+/* ============================================================
+   🏆 AURORA GOLD THEME — MyKharcho Premium Design System
+   Dark Mode: Charcoal + Gold shimmer + Glassmorphism
+   Light Mode: Warm white + Gold accents + Soft shadows
+   ============================================================ */
+
+:root {
+  /* ── Light Mode Palette ── */
+  --color-primary: #D97706;           /* Gold (darker for light bg) */
+  --color-primary-rgb: 217, 119, 6;
+  --color-primary-light: #F59E0B;     /* Amber gold */
+  --color-accent: #FBBF24;            /* Light gold shimmer */
+  --color-accent-rgb: 251, 191, 36;
+
+  --color-income: #0891B2;            /* Cyan-700 — income */
+  --color-income-bg: #ECFEFF;
+  --color-expense: #EF4444;           /* Red — expense */
+  --color-expense-bg: #FFF1F2;
+  --color-loan: #EA580C;              /* Orange — loans */
+  --color-loan-bg: #FFF7ED;
+
+  --color-bg-app: #FAFAF5;            /* Warm off-white */
+  --color-bg-card: #FFFFFF;
+  --color-bg-card-hover: #FFFBEB;
+  --color-sidebar-bg: #FEF9EE;
+  --color-sidebar-border: #FDE68A;
+
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+
+  --color-border: #FDE68A;            /* Warm gold border */
+  --color-border-subtle: #FEF3C7;
+
+  --color-success: #059669;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+
+  /* Glow / shadow tokens */
+  --glow-gold: 0 0 30px rgba(251,191,36,0.15), 0 0 60px rgba(217,119,6,0.08);
+  --shadow-card: 0 4px 24px rgba(217,119,6,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 12px 40px rgba(217,119,6,0.16), 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* Custom Scrollbar for Next-Gen UI */
+.dark {
+  /* ── Dark Mode Palette ── */
+  --color-primary: #F59E0B;           /* Gold (bright on dark) */
+  --color-primary-rgb: 245, 158, 11;
+  --color-primary-light: #FBBF24;     /* Light gold */
+  --color-accent: #FCD34D;            /* Shimmer gold */
+  --color-accent-rgb: 252, 211, 77;
+
+  --color-income: #06B6D4;            /* Cyan — income */
+  --color-income-bg: rgba(6,182,212,0.1);
+  --color-expense: #F87171;           /* Coral red — expense */
+  --color-expense-bg: rgba(248,113,113,0.1);
+  --color-loan: #FB923C;              /* Orange — loans */
+  --color-loan-bg: rgba(251,146,60,0.1);
+
+  --color-bg-app: #111318;            /* Deep charcoal */
+  --color-bg-card: #1C1F28;           /* Dark card surface */
+  --color-bg-card-hover: #22263A;
+  --color-sidebar-bg: #161920;        /* Darker sidebar */
+  --color-sidebar-border: #2A2D3E;
+
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+
+  --color-border: #2A2D3E;
+  --color-border-subtle: #1E2130;
+
+  --color-success: #10B981;
+  --color-danger: #F87171;
+  --color-warning: #FBBF24;
+
+  --glow-gold: 0 0 30px rgba(245,158,11,0.2), 0 0 80px rgba(245,158,11,0.06);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-card-hover: 0 12px 40px rgba(245,158,11,0.15), 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* ── Tailwind Token Bridge (minimal — do NOT override white/text-white) ── */
+@theme {
+  /* Primary gold */
+  --color-amber-500: var(--color-primary);
+  --color-amber-400: var(--color-primary-light);
+  --color-yellow-400: var(--color-accent);
+
+  /* Income color */
+  --color-cyan-500: var(--color-income);
+
+  /* Expense color */
+  --color-red-400: var(--color-expense);
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-app) !important;
+  color: var(--color-text-primary) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* App wrapper */
+.App,
+.App.bg-\[\#08172c\],
+div.bg-\[\#08172c\],
+main.bg-\[\#08172c\] {
+  background-color: var(--color-bg-app) !important;
+}
+
+/* ============================================================
+   GLOBAL TEXT VISIBILITY FIX
+   The components use text-white everywhere (legacy dark theme).
+   We remap text-white → text-primary EXCEPT when inside
+   a genuinely dark/colored container (gradient banner, colored card etc.)
+   ============================================================ */
+
+/* Step 1: Globally remap text-white to theme text color */
+.text-white {
+  color: var(--color-text-primary) !important;
+}
+
+/* Step 2: Restore white text INSIDE dark/colored elements */
+[class*="bg-gradient-to-"] .text-white,
+[class*="bg-gradient-to-"] *,
+[style*="linear-gradient"] .text-white,
+[style*="linear-gradient"] *,
+.bg-blue-600 .text-white,
+.bg-orange-600 .text-white,
+.bg-orange-700 .text-white,
+.bg-rose-500 .text-white,
+.bg-rose-600 .text-white,
+.bg-green-600 .text-white,
+.bg-indigo-600 .text-white,
+.bg-amber-500 .text-white,
+.bg-\[\#c1522d\] .text-white,
+button[style*="linear-gradient"],
+button[style*="linear-gradient"] * {
+  color: #ffffff !important;
+}
+
+/* Step 3: Button text-white always stays white (buttons have their own bg) */
+button.text-white {
+  color: #ffffff !important;
+}
+a.text-white {
+  color: #ffffff !important;
+}
+
+/* Step 4: Icon-only elements that are inside nav buttons (active state) */
+button[style*="linear-gradient"] svg,
+button[style*="linear-gradient"] div {
+  color: #ffffff !important;
+}
+
+
+/* ============================================================
+   SIDEBAR — Aurora Gold Sidebar
+   ============================================================ */
+aside.bg-\[\#0c3468\],
+div.bg-\[\#0c3468\].h-full,
+.bg-\[\#0c3468\] {
+  background-color: var(--color-sidebar-bg) !important;
+  border-color: var(--color-sidebar-border) !important;
+}
+
+/* Main layout container overrides */
+div.flex.h-screen.bg-\[\#0c3468\] {
+  background-color: var(--color-bg-app) !important;
+}
+
+/* Topbar */
+header.bg-\[\#0c3468\]\/80,
+header.backdrop-blur-xl {
+  background-color: color-mix(in srgb, var(--color-sidebar-bg) 90%, transparent) !important;
+  border-color: var(--color-sidebar-border) !important;
+  backdrop-filter: blur(20px);
+}
+
+/* ============================================================
+   CARD SURFACES — Glassmorphism Aurora Gold
+   ============================================================ */
+.bg-slate-950,
+.bg-slate-950\/30,
+.bg-slate-900,
+.bg-\[\#0f172a\],
+.bg-\[\#0f172a\]\/80,
+.bg-\[\#0c3468\]\/50,
+.bg-white {
+  background-color: var(--color-bg-card) !important;
+  border-color: var(--color-border) !important;
+}
+
+.bg-slate-950\/50,
+.bg-slate-900\/80,
+.bg-\[\#0f172a\]\/50,
+.bg-\[\#0c3468\]\/80 {
+  background-color: color-mix(in srgb, var(--color-bg-card) 90%, transparent) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Login page background */
+.min-h-screen.bg-\[\#0f172a\] {
+  background-color: var(--color-bg-app) !important;
+}
+
+/* Login: "Elite Access" divider bg */
+span.bg-\[\#0f172a\] {
+  background-color: var(--color-bg-card) !important;
+}
+
+/* ============================================================
+   INTERACTIVE CARDS — Hover Lift + Gold Glow
+   ============================================================ */
+div.bg-slate-950,
+div.bg-slate-950\/50,
+div.bg-slate-900,
+div.bg-\[\#0f172a\],
+div.bg-\[\#0f172a\]\/50,
+div.bg-\[\#0c3468\]\/50,
+div[class*="rounded-2xl"],
+div[class*="rounded-3xl"],
+div[class*="rounded-\[2.5rem\]"],
+div[class*="rounded-\[3rem\]"] {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+div.bg-slate-950:hover,
+div.bg-slate-950\/50:hover,
+div.bg-slate-900:hover,
+div.bg-\[\#0f172a\]:hover,
+div.bg-\[\#0f172a\]\/50:hover,
+div.bg-\[\#0c3468\]\/50:hover,
+div[class*="rounded-2xl"]:hover,
+div[class*="rounded-3xl"]:hover,
+div[class*="rounded-\[2.5rem\]"]:hover,
+div[class*="rounded-\[3rem\]"]:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: var(--shadow-card-hover) !important;
+}
+
+/* ============================================================
+   BORDER OVERRIDES — Warm Gold
+   ============================================================ */
+.border-slate-800,
+.border-slate-800\/50,
+.border-slate-700,
+.border-\[\#344c77\] {
+  border-color: var(--color-border) !important;
+  transition: border-color 0.2s ease !important;
+}
+
+/* ============================================================
+   SIDEBAR NAVIGATION — Active state = Gold, Hover = Gold tint
+   ============================================================ */
+aside button:not(.active-nav) {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+aside button:not(.active-nav):hover {
+  transform: translateX(5px);
+  background-color: rgba(var(--color-primary-rgb), 0.12) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Active nav button (uses bg-blue-600 Tailwind class in the codebase) */
+button.bg-blue-600,
+.bg-blue-600 {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) !important;
+  box-shadow: 0 4px 20px rgba(var(--color-primary-rgb), 0.35) !important;
+  color: #ffffff !important;
+}
+
+button.bg-blue-600 *,
+.bg-blue-600 * {
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   BUTTONS — Physical Click Physics
+   ============================================================ */
+button,
+a,
+input[type="submit"],
+[role="button"],
+.cursor-pointer {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active,
+a:active,
+[role="button"]:active,
+.cursor-pointer:active {
+  transform: scale(0.96) !important;
+}
+
+/* Primary gradient buttons */
+.bg-gradient-to-r,
+.bg-gradient-to-br {
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.bg-gradient-to-r:hover,
+.bg-gradient-to-br:hover {
+  opacity: 0.92;
+  box-shadow: 0 8px 28px rgba(var(--color-primary-rgb), 0.3) !important;
+}
+
+/* Override gradient colors — from-blue/orange → from-gold */
+.from-blue-600,
+.from-orange-600,
+.from-\[\#c1522d\] {
+  --tw-gradient-from: var(--color-primary) !important;
+}
+
+.to-blue-500,
+.to-blue-400,
+.to-orange-500,
+.to-\[\#a04222\] {
+  --tw-gradient-to: var(--color-primary-light) !important;
+}
+
+/* ============================================================
+   TEXT COLOR OVERRIDES — CRITICAL VISIBILITY FIXES
+   ============================================================ */
+
+/*
+  DO NOT override text-white for regular headings, labels, paragraphs.
+  Only force white text INSIDE colored/dark backgrounds.
+*/
+
+/* Keep text white only inside colored buttons/badges/gradient areas */
+button.text-white:not([style]),
+a.text-white:not([style]),
+.bg-blue-600 *,
+.bg-orange-600 *,
+.bg-green-600 *,
+.bg-rose-500 *,
+.bg-rose-600 *,
+.bg-indigo-600 *,
+.bg-amber-500 *,
+[class*="bg-gradient"] *,
+[style*="linear-gradient"] * {
+  color: #ffffff !important;
+}
+
+/* Active sidebar nav button: force white text */
+button[style*="linear-gradient"],
+button[style*="linear-gradient"] * {
+  color: #ffffff !important;
+}
+
+/* Slate text hierarchy — map to theme variables */
+.text-slate-300,
+.text-slate-200,
+.text-slate-100,
+.text-slate-50 {
+  color: var(--color-text-primary) !important;
+}
+.text-slate-400 {
+  color: var(--color-text-muted) !important;
+}
+.text-slate-500,
+.text-slate-600 {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Brand / semantic colors */
+.text-blue-400,
+.text-blue-500,
+.text-blue-600 {
+  color: var(--color-income) !important;
+}
+
+.text-orange-500,
+.text-orange-600,
+.text-\[\#c1522d\] {
+  color: var(--color-primary) !important;
+}
+
+.text-amber-400,
+.text-amber-500 {
+  color: var(--color-accent) !important;
+}
+
+/* ============================================================
+   INCOME / EXPENSE / LOAN BADGE COLORS
+   ============================================================ */
+.bg-orange-500\/10 {
+  background-color: rgba(var(--color-primary-rgb), 0.1) !important;
+  color: var(--color-primary) !important;
+  border-color: rgba(var(--color-primary-rgb), 0.3) !important;
+}
+
+.bg-blue-500\/10 {
+  background-color: var(--color-income-bg) !important;
+  color: var(--color-income) !important;
+  border-color: var(--color-income) !important;
+}
+
+.bg-slate-500\/10 {
+  background-color: rgba(255,255,255,0.06) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* ============================================================
+   INPUT FIELDS — Aurora Gold Focus Ring + PROPER TEXT COLOR
+   ============================================================ */
+input,
+textarea {
+  background-color: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  border: 1.5px solid var(--color-border) !important;
+  transition: all 0.25s ease !important;
+  border-radius: 0.75rem;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
+/* ============================================================
+   SELECT — Custom Gold Chevron Arrow
+   Native <select> cannot contain child SVG elements.
+   We inject a gold chevron via CSS background-image SVG.
+   ============================================================ */
+select {
+  background-color: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  border: 1.5px solid var(--color-border) !important;
+  transition: all 0.25s ease !important;
+  border-radius: 0.75rem;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+  /* Gold chevron arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23D97706' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 18px !important;
+  padding-right: 42px !important; /* Space for the arrow */
+  cursor: pointer;
+}
+
+select:focus {
+  /* Brighter gold arrow on focus */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23F59E0B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+}
+
+/* Dark mode: slightly brighter arrow */
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23F59E0B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+}
+
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15), 0 4px 16px rgba(var(--color-primary-rgb), 0.1) !important;
+  outline: none;
+  /* NOTE: No transform here — transform creates a new stacking context
+     that would push the input OVER the absolute-positioned icon */
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted) !important;
+  -webkit-text-fill-color: var(--color-text-muted) !important;
+  opacity: 0.7;
+}
+
+/* =webkit-calendar-picker-indicator styling for gold themed date input icon */
+input[type="date"] {
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4) sepia(100%) saturate(800%) hue-rotate(340deg) !important;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(100%) saturate(1000%) hue-rotate(20deg) !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* Override any Tailwind text-white that may affect inputs */
+input.text-white,
+select.text-white,
+textarea.text-white,
+input[class*="text-white"],
+input[class*="text-slate"] {
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+
+/* Label contrast fix */
+label {
+  color: var(--color-text-primary) !important;
+}
+
+/* Form labels */
+form label {
+  color: var(--color-text-primary) !important;
+}
+
+/* Small muted secondary text inside forms */
+form .text-xs {
+  color: var(--color-text-secondary) !important;
+}
+
+/* CRITICAL: Icons inside input wrappers must stay ABOVE input.
+   Icons use `absolute` Tailwind class for positioning — do NOT add position:relative here
+   as it would override the absolute positioning. Just set z-index. */
+.relative > svg,
+.group > svg,
+.relative .absolute {
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Inputs sit below icons in stacking order */
+.relative input,
+.relative select,
+.relative textarea {
+  z-index: 1;
+}
+
+/* ============================================================
+   STAT / BALANCE CARDS — Aurora Gold Hero
+   ============================================================ */
+.aurora-balance {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Income card accent */
+.income-card {
+  border-left: 3px solid var(--color-income) !important;
+  background: var(--color-income-bg) !important;
+}
+
+/* Expense card accent */
+.expense-card {
+  border-left: 3px solid var(--color-expense) !important;
+  background: var(--color-expense-bg) !important;
+}
+
+/* Loan card accent */
+.loan-card {
+  border-left: 3px solid var(--color-loan) !important;
+  background: var(--color-loan-bg) !important;
+}
+
+/* ============================================================
+   LOGO BRAND COLOR (sidebar + topbar)
+   ============================================================ */
+.brand-accent {
+  color: var(--color-primary) !important;
+}
+
+.brand-logo-border {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 16px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* ============================================================
+   RECHARTS — Gold Chart Colors
+   ============================================================ */
+.recharts-area-area {
+  opacity: 0.6;
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR — Gold Track
+   ============================================================ */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -18,10 +605,77 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-border) !important;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--color-primary) !important;
+}
+
+/* ============================================================
+   PREMIUM BADGE — Gold shimmer
+   ============================================================ */
+.bg-amber-500\/10 {
+  background-color: rgba(var(--color-accent-rgb), 0.1) !important;
+}
+
+.border-amber-500\/50 {
+  border-color: rgba(var(--color-accent-rgb), 0.5) !important;
+}
+
+/* ============================================================
+   DARK MODE TRANSITION — Smooth page-level fade
+   ============================================================ */
+html {
+  transition: background-color 0.3s ease;
+}
+
+/* ============================================================
+   GLASSMORPHISM UTILITY
+   ============================================================ */
+.glass-card {
+  background: color-mix(in srgb, var(--color-bg-card) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+.glass-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-accent);
+}
+
+/* ============================================================
+   AURORA GLOW — Decorative orb animations (login, dashboard)
+   ============================================================ */
+@keyframes aurora-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.08); }
+}
+
+.aurora-orb {
+  animation: aurora-pulse 6s ease-in-out infinite;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.aurora-orb-gold {
+  background: radial-gradient(circle, rgba(245,158,11,0.3), transparent 70%);
+}
+
+.aurora-orb-cyan {
+  background: radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%);
+}
+
+/* ============================================================
+   RECHARTS TOOLTIP — dark/light aware
+   ============================================================ */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  color: var(--color-text-primary) !important;
 }

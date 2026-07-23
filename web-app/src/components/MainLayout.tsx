@@ -15,7 +15,9 @@ import {
     Menu,
     X,
     ShieldCheck,
-    PieChart
+    PieChart,
+    Sun,
+    Moon
 } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -29,6 +31,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
     const [isSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
+    const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+
+    const toggleTheme = () => {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            setIsDarkMode(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            setIsDarkMode(true);
+        }
+        // Dispatch event for other layout files (like AdminLayout) to stay in sync
+        window.dispatchEvent(new Event('themeChanged'));
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -76,14 +93,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
     }
 
     return (
-        <div className="flex h-screen bg-[#0c3468] text-slate-300 font-sans selection:bg-[#c1522d]/30 overflow-hidden">
+        <div className="flex h-screen font-sans overflow-hidden" style={{backgroundColor: 'var(--color-bg-app)', color: 'var(--color-text-primary)', userSelect: 'auto'}}>
             {/* Sidebar - Desktop */}
-            <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r border-slate-800/50 bg-[#0c3468] transition-all duration-500 ease-in-out flex-col z-50`}>
+            <aside className={`hidden lg:flex ${isSidebarOpen ? 'w-80' : 'w-24'} border-r transition-all duration-500 ease-in-out flex-col z-50`} style={{backgroundColor: 'var(--color-sidebar-bg)', borderColor: 'var(--color-sidebar-border)'}}>
                 <div className="p-8 flex items-center gap-4 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                    <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2" style={{borderColor: 'var(--color-primary)', boxShadow: '0 0 16px rgba(var(--color-primary-rgb),0.3)'}}/>
                     {isSidebarOpen && (
                         <div className="animate-in fade-in duration-700">
-                            <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
+                            <span className="text-2xl font-black tracking-tighter block leading-none" style={{color: 'var(--color-text-primary)'}}>My<span style={{color: 'var(--color-primary)'}}>Kharcho</span></span>
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Financial OS</span>
                         </div>
                     )}
@@ -94,7 +111,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                         <button 
                             key={item.path}
                             onClick={() => navigate(item.path)}
-                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-blue-600 text-white shadow-2xl shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-200'}`}
+                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${location.pathname === item.path ? 'text-white shadow-2xl' : ''}`}
+                            style={location.pathname === item.path ? {background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', boxShadow: '0 4px 20px rgba(var(--color-primary-rgb),0.35)', color: '#fff'} : {color: 'var(--color-text-secondary)'}}
                         >
                             <div className={`${location.pathname === item.path ? 'text-white' : 'group-hover:scale-110 transition-transform duration-300'}`}>{item.icon}</div>
                             {isSidebarOpen && <span className="font-black text-sm tracking-tight">{item.label}</span>}
@@ -108,12 +126,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
             {/* Mobile Sidebar Overlay */}
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 bg-black/80 z-50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}>
-                    <aside className="w-[280px] h-full border-r border-slate-800/50 bg-[#0c3468] flex flex-col" onClick={e => e.stopPropagation()}>
+                    <aside className="w-[280px] h-full border-r flex flex-col" style={{backgroundColor: 'var(--color-sidebar-bg)', borderColor: 'var(--color-sidebar-border)'}} onClick={e => e.stopPropagation()}>
                         <div className="p-8 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2 border-[#c1522d]"/>
+                                <img src="/newlogo.png" alt="Logo" className="w-12 h-12 rounded-[1.2rem] shadow-2xl flex-shrink-0 object-cover border-2" style={{borderColor: 'var(--color-primary)'}}/>
                                 <div>
-                                    <span className="text-2xl font-black text-white tracking-tighter block leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
+                                    <span className="text-2xl font-black tracking-tighter block leading-none" style={{color: 'var(--color-text-primary)'}}>My<span style={{color: 'var(--color-primary)'}}>Kharcho</span></span>
                                 </div>
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="text-slate-500"><X size={24}/></button>
@@ -124,7 +142,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                                 <button 
                                     key={item.path}
                                     onClick={() => navigate(item.path)}
-                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${location.pathname === item.path ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-200'}`}
+                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${location.pathname === item.path ? 'text-white' : ''}`}
+                                    style={location.pathname === item.path ? {background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))', color: '#fff'} : {color: 'var(--color-text-secondary)'}}
                                 >
                                     <div>{item.icon}</div>
                                     <span className="font-black text-sm tracking-tight">{item.label}</span>
@@ -139,7 +158,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col overflow-hidden relative">
                 {/* Topbar */}
-                <header className="h-20 md:h-24 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-6 lg:px-10 bg-[#0c3468]/80 backdrop-blur-xl sticky top-0 z-40">
+                <header className="h-20 md:h-24 border-b flex items-center justify-between px-4 md:px-6 lg:px-10 backdrop-blur-xl sticky top-0 z-40" style={{backgroundColor: 'color-mix(in srgb, var(--color-sidebar-bg) 88%, transparent)', borderColor: 'var(--color-sidebar-border)'}}>
                     <div className="flex items-center gap-3 md:gap-4">
                         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2.5 md:p-3 text-slate-400 hover:text-white bg-slate-800/50 rounded-xl transition-all">
                             <Menu size={24}/>
@@ -147,8 +166,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                         
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex items-center gap-2">
-                            <img src="/newlogo.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg flex-shrink-0 object-cover border border-[#c1522d]"/>
-                            <span className="text-lg font-black text-white tracking-tighter leading-none">My<span className="text-[#c1522d]">Kharcho</span></span>
+                            <img src="/newlogo.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg flex-shrink-0 object-cover border" style={{borderColor: 'var(--color-primary)'}}/>
+                            <span className="text-lg font-black tracking-tighter leading-none" style={{color: 'var(--color-text-primary)'}}>My<span style={{color: 'var(--color-primary)'}}>Kharcho</span></span>
                         </div>
 
                     </div>
@@ -165,15 +184,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout }) => {
                         <div className="flex items-center gap-4">
                             <div onClick={() => navigate('/settings')} className="flex items-center gap-4 cursor-pointer hover:bg-slate-800/30 px-3 py-2.5 rounded-2xl transition-all group border border-transparent hover:border-slate-800">
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-black text-white group-hover:text-blue-400 transition-colors">{profile?.full_name || 'Loading...'}</p>
-                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em] mt-0.5">{profile?.preferred_currency} Account</p>
+                                    <p className="text-sm font-black transition-colors" style={{color: 'var(--color-text-primary)'}}>{profile?.full_name || 'Loading...'}</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.15em] mt-0.5" style={{color: 'var(--color-text-secondary)'}}>{profile?.preferred_currency} Account</p>
                                 </div>
-                                <div className="w-12 h-12 rounded-2xl bg-slate-800 p-0.5 border border-slate-700 shadow-xl group-hover:border-blue-500/50 transition-all overflow-hidden relative">
-                                    <img src={getProfilePic()} className="w-full h-full object-cover" alt="avatar"/>
-                                    {profile?.is_premium && <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-slate-800 rounded-full ${profile.current_plan_id === 3 ? 'bg-amber-500' : 'bg-blue-500'}`}></div>}
+                                <div className="w-12 h-12 rounded-2xl p-0.5 border shadow-xl transition-all overflow-hidden relative" style={{backgroundColor: 'var(--color-border)', borderColor: 'var(--color-border)'}}>
+                                    <img src={getProfilePic()} className="w-full h-full object-cover rounded-xl" alt="avatar"/>
+                                    {profile?.is_premium && <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full`} style={{borderColor: 'var(--color-bg-card)', backgroundColor: profile.current_plan_id === 3 ? 'var(--color-accent)' : 'var(--color-income)'}}></div>}
                                 </div>
                             </div>
                             
+                            {/* Theme Toggler */}
+                            <button 
+                                onClick={toggleTheme}
+                                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                className="p-3 rounded-xl transition-all active:scale-90" style={{color: 'var(--color-text-secondary)'}}
+                            >
+                                {isDarkMode ? <Sun size={22} className="text-amber-500" /> : <Moon size={22} />}
+                            </button>
+
                             {/* Quick Logout Button */}
                             <button 
                                 onClick={onLogout}

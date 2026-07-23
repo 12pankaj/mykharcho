@@ -240,13 +240,13 @@ const styles = StyleSheet.create({
     logoContainer: {
         width: 100,
         height: 100,
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: 'rgba(59, 130, 246, 0.3)',
+        borderColor: 'rgba(245, 158, 11, 0.3)',
     },
     title: {
         fontSize: 36,

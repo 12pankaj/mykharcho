@@ -12,7 +12,7 @@ const generateToken = (userId, role) => {
 };
 
 exports.signup = async (req, res) => {
-    const { fullName, email, password, currency, countryCode } = req.body;
+    const { fullName, email, password, currency, countryCode, referredByCode } = req.body;
 
     try {
         // Check if user exists
@@ -25,10 +25,34 @@ exports.signup = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Generate unique referral code
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let referralCode = '';
+        let isUnique = false;
+        while (!isUnique) {
+            referralCode = '';
+            for (let i = 0; i < 6; i++) {
+                referralCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const checkRes = await db.query('SELECT id FROM users WHERE referral_code = $1', [referralCode]);
+            if (checkRes.rows.length === 0) {
+                isUnique = true;
+            }
+        }
+
+        // Look up referred_by user
+        let referredByUserId = null;
+        if (referredByCode) {
+            const referrerRes = await db.query('SELECT id FROM users WHERE referral_code = $1', [referredByCode.trim().toUpperCase()]);
+            if (referrerRes.rows.length > 0) {
+                referredByUserId = referrerRes.rows[0].id;
+            }
+        }
+
         // Create user
         const newUserResult = await db.query(
-            'INSERT INTO users (full_name, email, password_hash, preferred_currency, country_code) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email',
-            [fullName, email, hashedPassword, currency || 'INR', countryCode || 'IN']
+            'INSERT INTO users (full_name, email, password_hash, preferred_currency, country_code, referral_code, referred_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, full_name, email, preferred_currency, country_code, referral_code, referred_by',
+            [fullName, email, hashedPassword, currency || 'INR', countryCode || 'IN', referralCode, referredByUserId]
         );
         const newUser = newUserResult.rows[0];
 
@@ -41,7 +65,16 @@ exports.signup = async (req, res) => {
         const token = generateToken(newUser.id, 'user');
 
         res.status(201).json({
-            user: newUser,
+            user: {
+                id: newUser.id,
+                fullName: newUser.full_name,
+                email: newUser.email,
+                currency: newUser.preferred_currency,
+                countryCode: newUser.country_code,
+                referralCode: newUser.referral_code,
+                referredBy: newUser.referred_by,
+                hasReferralDiscount: !!newUser.referred_by
+            },
             token,
         });
     } catch (err) {
@@ -76,6 +109,11 @@ exports.login = async (req, res) => {
                 email: user.email,
                 currency: user.preferred_currency,
                 countryCode: user.country_code,
+                referralCode: user.referral_code,
+                referredBy: user.referred_by,
+                currentStreak: user.current_streak || 0,
+                lastTransactionDate: user.last_transaction_date || null,
+                hasClaimedTrial: user.has_claimed_trial || false
             },
             token,
         });
@@ -86,7 +124,7 @@ exports.login = async (req, res) => {
 };
 
 exports.googleAuth = async (req, res) => {
-    const { token } = req.body;
+    const { token, referredByCode } = req.body;
     try {
         let google_id, email, name, picture;
 
@@ -120,10 +158,34 @@ exports.googleAuth = async (req, res) => {
 
         let user;
         if (userResult.rows.length === 0) {
+            // Generate unique referral code
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let referralCode = '';
+            let isUnique = false;
+            while (!isUnique) {
+                referralCode = '';
+                for (let i = 0; i < 6; i++) {
+                    referralCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                const checkRes = await db.query('SELECT id FROM users WHERE referral_code = $1', [referralCode]);
+                if (checkRes.rows.length === 0) {
+                    isUnique = true;
+                }
+            }
+
+            // Look up referred_by user
+            let referredByUserId = null;
+            if (referredByCode) {
+                const referrerRes = await db.query('SELECT id FROM users WHERE referral_code = $1', [referredByCode.trim().toUpperCase()]);
+                if (referrerRes.rows.length > 0) {
+                    referredByUserId = referrerRes.rows[0].id;
+                }
+            }
+
             // Register new user via Google
             const newUserResult = await db.query(
-                'INSERT INTO users (full_name, email, google_id, preferred_currency, country_code) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                [name, email, google_id, 'INR', 'IN']
+                'INSERT INTO users (full_name, email, google_id, preferred_currency, country_code, referral_code, referred_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+                [name, email, google_id, 'INR', 'IN', referralCode, referredByUserId]
             );
             user = newUserResult.rows[0];
 
@@ -148,6 +210,11 @@ exports.googleAuth = async (req, res) => {
                 email: user.email,
                 currency: user.preferred_currency,
                 countryCode: user.country_code,
+                referralCode: user.referral_code,
+                referredBy: user.referred_by,
+                currentStreak: user.current_streak || 0,
+                lastTransactionDate: user.last_transaction_date || null,
+                hasClaimedTrial: user.has_claimed_trial || false
             },
             token: jwtToken,
         });

@@ -10,12 +10,13 @@ export default function SignupScreen({ navigation }: any) {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [referredByCode, setReferredByCode] = useState('');
 
     const handleSignup = async () => {
         if(email && password && fullName) {
             try {
                 // Call actual signup API
-                const res = await AuthService.signup({ fullName, email, password });
+                const res = await AuthService.signup({ fullName, email, password, referredByCode });
                 if (res.data && res.data.token) {
                     await signIn(res.data.token, res.data.user);
                 }
@@ -75,6 +76,18 @@ export default function SignupScreen({ navigation }: any) {
                             secureTextEntry
                             value={password}
                             onChangeText={setPassword}
+                        />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Referral Code (Optional)</Text>
+                        <TextInput 
+                            style={styles.input}
+                            placeholder="e.g. PANKAJ"
+                            placeholderTextColor={Colors.textSecondary}
+                            autoCapitalize="characters"
+                            value={referredByCode}
+                            onChangeText={(val) => setReferredByCode(val.toUpperCase())}
                         />
                     </View>
 

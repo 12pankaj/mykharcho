@@ -381,13 +381,22 @@ const Loans: React.FC = () => {
                                     <input type="date" required value={contractForm.startDate} onChange={e => setContractForm({...contractForm, startDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
                                 </div>
                             </div>
-                            <button 
-                                type="submit" 
-                                disabled={contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi}
-                                className={`w-full font-black py-5 rounded-2xl transition-all ${contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/30'}`}
-                             >
-                                {contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi ? 'Upgrade for Auto-EMI' : 'Create & Auto-Generate EMIs'}
-                            </button>
+                            <div className="flex gap-4 pt-2">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsAddContractOpen(false)} 
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-4 rounded-xl border border-slate-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi}
+                                    className={`flex-1 font-black py-4 rounded-xl transition-all ${contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' : 'bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white shadow-xl shadow-amber-500/10'}`}
+                                 >
+                                    {contractForm.totalInstallments > 0 && profile && !profile.can_auto_emi ? 'Upgrade for Auto-EMI' : 'Create Contract'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -401,7 +410,16 @@ const Loans: React.FC = () => {
                         <form onSubmit={handleAddInstallment} className="space-y-6">
                             <input type="date" required value={installmentForm.dueDate} onChange={e => setInstallmentForm({...installmentForm, dueDate: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold" />
                             <input type="number" min="0.01" step="0.01" placeholder="EMI Amount" required value={installmentForm.emiAmount} onChange={e => setInstallmentForm({...installmentForm, emiAmount: parseFloat(e.target.value) || 0})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold tabular-nums" />
-                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl">Save Installment</button>
+                            <div className="flex gap-4 pt-2">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsAddInstallmentOpen(false)} 
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-4 rounded-xl border border-slate-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-black py-4 rounded-xl shadow-xl shadow-amber-500/10">Save Installment</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -428,9 +446,18 @@ const Loans: React.FC = () => {
                                 </label>
                                 <input type="number" min="0.01" step="0.01" required max={parseFloat(selectedInstallment?.emi_amount) - parseFloat(selectedInstallment?.paid_amount)} value={payForm.paidAmount} onChange={e => setPayForm({...payForm, paidAmount: parseFloat(e.target.value) || 0})} className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-white font-bold tabular-nums" />
                             </div>
-                            <button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-orange-600/20">
-                                {selectedContract?.role === 'Lender' ? 'Confirm Receipt' : 'Confirm Payment'}
-                            </button>
+                            <div className="flex gap-4 pt-2">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsPayModalOpen(false)} 
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold py-4 rounded-xl border border-slate-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-black py-4 rounded-xl shadow-xl shadow-amber-500/10">
+                                    {selectedContract?.role === 'Lender' ? 'Confirm Receipt' : 'Confirm Payment'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

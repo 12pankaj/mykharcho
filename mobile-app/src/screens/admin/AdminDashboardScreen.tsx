@@ -42,8 +42,8 @@ export default function AdminDashboardScreen({ navigation }: any) {
                         onPress={() => navigation.navigate('AdminUsers')}
                     >
                         <GlassCard intensity="heavy" style={styles.statCard}>
-                            <View style={[styles.iconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                                <Users color="#3b82f6" size={24} />
+                            <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                                <Users color={Colors.primary} size={24} />
                             </View>
                             <Text style={styles.statValue}>{stats.totalUsers}</Text>
                             <Text style={styles.statLabel}>Total Users</Text>

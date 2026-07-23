@@ -61,9 +61,9 @@ export default function AdminUsersScreen() {
                                         <Text style={styles.badgeText}>{user.role}</Text>
                                     </View>
                                     {user.is_premium && (
-                                        <View style={[styles.badge, { backgroundColor: 'rgba(59, 130, 246, 0.2)', flexDirection: 'row', gap: 4 }]}>
-                                            <Crown color="#3b82f6" size={10} />
-                                            <Text style={[styles.badgeText, { color: '#3b82f6' }]}>Premium</Text>
+                                        <View style={[styles.badge, { backgroundColor: 'rgba(245, 158, 11, 0.2)', flexDirection: 'row', gap: 4 }]}>
+                                            <Crown color={Colors.primary} size={10} />
+                                            <Text style={[styles.badgeText, { color: Colors.primary }]}>Premium</Text>
                                         </View>
                                     )}
                                 </View>

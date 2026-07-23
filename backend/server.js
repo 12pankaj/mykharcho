@@ -15,7 +15,7 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: false })); // SECURITY: Add security headers, allow cross origin resources for images
 
 // SECURITY: Restrict CORS
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://app.mykharcho.in', 'http://127.0.0.1:5173', 'http://localhost:8081', 'exp://localhost:8081', 'https://d7nql637-5010.inc1.devtunnels.ms/'];
+const allowedOrigins = ['http://localhost:5010', 'http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'https://app.mykharcho.in', 'http://127.0.0.1:5173', 'http://localhost:8081', 'exp://localhost:8081', 'https://d7nql637-5010.inc1.devtunnels.ms/'];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -98,6 +98,7 @@ app.get('/api/profile', authMiddleware, userController.getProfile);
 app.put('/api/profile', authMiddleware, userController.updateProfile);
 app.post('/api/profile/upload', authMiddleware, upload.single('image'), uploadController.uploadProfilePic);
 app.post('/api/profile/push-token', authMiddleware, userController.savePushToken);
+app.post('/api/user/claim-trial', authMiddleware, userController.claimTrial);
 
 // Wallet Routes
 const walletController = require('./app/controllers/walletController');
@@ -166,6 +167,17 @@ app.get('/api/admin/plans', authMiddleware, adminMiddleware, adminController.get
 app.get('/api/public/plans', adminController.getPlans); // Public route for marketing site
 app.post('/api/admin/plans', authMiddleware, adminMiddleware, adminController.createPlan);
 app.put('/api/admin/plans', authMiddleware, adminMiddleware, adminController.updatePlan);
+
+app.get('/api/admin/coupons', authMiddleware, adminMiddleware, adminController.getCoupons);
+app.post('/api/admin/coupons', authMiddleware, adminMiddleware, adminController.createCoupon);
+app.put('/api/admin/coupons', authMiddleware, adminMiddleware, adminController.updateCoupon);
+app.delete('/api/admin/coupons/:id', authMiddleware, adminMiddleware, adminController.deleteCoupon);
+
+app.get('/api/admin/promotions', authMiddleware, adminMiddleware, adminController.getPromotions);
+app.post('/api/admin/promotions', authMiddleware, adminMiddleware, adminController.createPromotion);
+app.put('/api/admin/promotions', authMiddleware, adminMiddleware, adminController.updatePromotion);
+app.delete('/api/admin/promotions/:id', authMiddleware, adminMiddleware, adminController.deletePromotion);
+app.get('/api/promotions/active', authMiddleware, adminController.getActivePromotion);
 
 // Notifications Routes
 const notificationController = require('./app/controllers/notificationController');

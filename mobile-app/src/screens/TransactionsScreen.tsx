@@ -84,7 +84,7 @@ export default function TransactionsScreen({ navigation }: { navigation: any }) 
                     <head>
                         <style>
                             body { font-family: sans-serif; padding: 20px; color: #333; }
-                            h1 { color: #2563eb; margin-bottom: 5px; }
+                            h1 { color: #F59E0B; margin-bottom: 5px; }
                             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                             th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
                             th { background-color: #f8fafc; font-weight: bold; }
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     filterBtn: {
         width: 48,
         height: 48,
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
