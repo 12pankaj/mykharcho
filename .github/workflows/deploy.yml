@@ -26,8 +26,8 @@ jobs:
             cd /mykharcho
 
             git fetch origin
-            git checkout main
-            git reset --hard origin/main
+            git checkout master 
+            git reset --hard origin/master
 
             echo "========== BACKEND =========="
             cd backend
@@ -76,7 +76,7 @@ jobs:
                     },
                     {
                       "type": "text",
-                      "text": "main"
+                      "text": "master branch "
                     }
                   ]
                 }
@@ -109,7 +109,7 @@ jobs:
                     },
                     {
                       "type": "text",
-                      "text": "main"
+                      "text": "master branch"
                     }
                   ]
                 }
