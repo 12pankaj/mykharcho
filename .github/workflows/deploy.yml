@@ -32,6 +32,8 @@ jobs:
             echo "========== BACKEND =========="
             cd backend
             npm install
+            node run_saas_migration.js
+            node run_marketing_migration.js
             pm2 restart mykharcho-api || pm2 start server.js --name mykharcho-api
 
             echo "========== MARKETING SITE =========="
